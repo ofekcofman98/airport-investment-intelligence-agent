@@ -106,7 +106,7 @@ export function createCli(deps: ChannelDeps, opts: CliOptions = {}): Channel {
     for (;;) {
       let line: string;
       try {
-        line = await rl.question("> ");
+        line = await rl.question("\n> ");
       } catch {
         // Input stream closed (e.g. piped stdin ended, or Ctrl+D) — end the
         // session cleanly rather than throwing out of the REPL loop.
@@ -145,9 +145,13 @@ export function createCli(deps: ChannelDeps, opts: CliOptions = {}): Channel {
       // per-turn clearing is this channel's own choice, ADR 0009).
       deps.trace.clear();
 
+      const thinking = setInterval(() => output.write("."), 400);
+      output.write("Thinking.");
+
       try {
         const reply = await deps.agent.handleMessage(command.text, sessionId);
-        write(reply.text);
+        clearInterval(thinking);
+        write("\n" + reply.text);
         if (reply.audited !== "passed") {
           write(
             `[note: this answer was ${reply.audited} by the output-consistency ` +
@@ -158,8 +162,9 @@ export function createCli(deps: ChannelDeps, opts: CliOptions = {}): Channel {
           write(formatTrace(deps.trace.events()));
         }
       } catch (err) {
+        clearInterval(thinking);
         const message = err instanceof Error ? err.message : String(err);
-        write(`Error: ${message}`);
+        write(`\nError: ${message}`);
       }
     }
 
