@@ -1,0 +1,18 @@
+{
+  "code": "ANC",
+  "year": 2025,
+  "passengers": 2714117,
+  "seats": 3689669,
+  "departuresScheduled": 55947,
+  "departuresPerformed": 87746,
+  "loadFactor": 0.735599046960581,
+  "scheduleAdherenceGap": -0.5683772141491055,
+  "longHaulShare": 0.432714881590044,
+  "del15Rate": 0.11290322580645161,
+  "avgTaxiOutMin": 16.411290322580644,
+  "nasDelayPerDeparture": 1.5201612903225807,
+  "weatherDelayPerDeparture": 0.1629032258064516,
+  "cancellationRate": 0.00641025641025641,
+  "paxGrowthYoy": -0.008241762257223395,
+  "dataCompleteness": 1
+}

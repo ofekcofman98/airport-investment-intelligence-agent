@@ -1,0 +1,18 @@
+{
+  "code": "MIA",
+  "year": 2025,
+  "passengers": 26539172,
+  "seats": 32901268,
+  "departuresScheduled": 172387,
+  "departuresPerformed": 221301,
+  "loadFactor": 0.8066306745381363,
+  "scheduleAdherenceGap": -0.2837452940186904,
+  "longHaulShare": 0.1278891645315656,
+  "del15Rate": 0.24656771799628943,
+  "avgTaxiOutMin": 23.76447124304267,
+  "nasDelayPerDeparture": 5.189424860853432,
+  "weatherDelayPerDeparture": 1.34860853432282,
+  "cancellationRate": 0.01282051282051282,
+  "paxGrowthYoy": -0.008338585740584992,
+  "dataCompleteness": 1
+}

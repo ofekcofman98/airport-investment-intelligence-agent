@@ -1,0 +1,18 @@
+{
+  "code": "SJC",
+  "year": 2025,
+  "passengers": 5284137,
+  "seats": 7130077,
+  "departuresScheduled": 48974,
+  "departuresPerformed": 50450,
+  "loadFactor": 0.7411051802105363,
+  "scheduleAdherenceGap": -0.03013844080532535,
+  "longHaulShare": 0.005490584737363726,
+  "del15Rate": 0.13420579933282012,
+  "avgTaxiOutMin": 14.230177059276366,
+  "nasDelayPerDeparture": 1.1247113163972287,
+  "weatherDelayPerDeparture": 0.590454195535027,
+  "cancellationRate": 0.0051059484299208575,
+  "paxGrowthYoy": -0.09917971904478018,
+  "dataCompleteness": 1
+}

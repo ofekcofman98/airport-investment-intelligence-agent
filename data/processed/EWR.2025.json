@@ -1,0 +1,18 @@
+{
+  "code": "EWR",
+  "year": 2025,
+  "passengers": 23564537,
+  "seats": 28403834,
+  "departuresScheduled": 174649,
+  "departuresPerformed": 188097,
+  "loadFactor": 0.8296252189053069,
+  "scheduleAdherenceGap": -0.07700015459578924,
+  "longHaulShare": 0.1559142357400703,
+  "del15Rate": 0.18628008338070873,
+  "avgTaxiOutMin": 23.392742088307752,
+  "nasDelayPerDeparture": 3.7122418040553344,
+  "weatherDelayPerDeparture": 0.5049270418798559,
+  "cancellationRate": 0.008827948910593538,
+  "paxGrowthYoy": -0.04143666186094219,
+  "dataCompleteness": 1
+}

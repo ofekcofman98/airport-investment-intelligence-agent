@@ -1,0 +1,18 @@
+{
+  "code": "SNA",
+  "year": 2025,
+  "passengers": 5532646,
+  "seats": 6937580,
+  "departuresScheduled": 48160,
+  "departuresPerformed": 51224,
+  "loadFactor": 0.7974893262492109,
+  "scheduleAdherenceGap": -0.06362126245847177,
+  "longHaulShare": 0.00015617679212868969,
+  "del15Rate": 0.16430131004366813,
+  "avgTaxiOutMin": 15.461517467248909,
+  "nasDelayPerDeparture": 2.4072052401746724,
+  "weatherDelayPerDeparture": 0.8992903930131004,
+  "cancellationRate": 0.009194159004867496,
+  "paxGrowthYoy": 0.026779064689735232,
+  "dataCompleteness": 1
+}

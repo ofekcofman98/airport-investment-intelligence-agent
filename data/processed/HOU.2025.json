@@ -1,0 +1,18 @@
+{
+  "code": "HOU",
+  "year": 2025,
+  "passengers": 6843379,
+  "seats": 9251556,
+  "departuresScheduled": 58830,
+  "departuresPerformed": 59707,
+  "loadFactor": 0.7397003271665868,
+  "scheduleAdherenceGap": -0.014907360190379082,
+  "longHaulShare": 0.0002344783693704256,
+  "del15Rate": 0.19673539518900343,
+  "avgTaxiOutMin": 12.386812714776632,
+  "nasDelayPerDeparture": 2.0214776632302405,
+  "weatherDelayPerDeparture": 0.059278350515463915,
+  "cancellationRate": 0.008095440988495952,
+  "paxGrowthYoy": -0.0480986116891412,
+  "dataCompleteness": 1
+}

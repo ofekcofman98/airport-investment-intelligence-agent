@@ -1,0 +1,18 @@
+{
+  "code": "JFK",
+  "year": 2025,
+  "passengers": 31011270,
+  "seats": 37883586,
+  "departuresScheduled": 174322,
+  "departuresPerformed": 220054,
+  "loadFactor": 0.8185938363913068,
+  "scheduleAdherenceGap": -0.26234210254586343,
+  "longHaulShare": 0.28709316804057183,
+  "del15Rate": 0.18474498038310638,
+  "avgTaxiOutMin": 24.932148626817447,
+  "nasDelayPerDeparture": 4.485345026540503,
+  "weatherDelayPerDeparture": 0.2954073390260789,
+  "cancellationRate": 0.008126359162183816,
+  "paxGrowthYoy": -0.015209484087440495,
+  "dataCompleteness": 1
+}

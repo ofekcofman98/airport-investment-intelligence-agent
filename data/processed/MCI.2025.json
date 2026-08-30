@@ -1,0 +1,18 @@
+{
+  "code": "MCI",
+  "year": 2025,
+  "passengers": 5670953,
+  "seats": 7398016,
+  "departuresScheduled": 53367,
+  "departuresPerformed": 54349,
+  "loadFactor": 0.76655051840926,
+  "scheduleAdherenceGap": -0.018400884441696075,
+  "longHaulShare": 0.00012879721798009163,
+  "del15Rate": 0.1690602166792643,
+  "avgTaxiOutMin": 14.19551524313429,
+  "nasDelayPerDeparture": 2.740992693373646,
+  "weatherDelayPerDeparture": 1.8795666414714034,
+  "cancellationRate": 0.015869080089263576,
+  "paxGrowthYoy": -0.05399228240808085,
+  "dataCompleteness": 1
+}

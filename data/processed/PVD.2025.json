@@ -1,0 +1,18 @@
+{
+  "code": "PVD",
+  "year": 2025,
+  "passengers": 2122707,
+  "seats": 2727051,
+  "departuresScheduled": 22236,
+  "departuresPerformed": 22193,
+  "loadFactor": 0.7783891830405812,
+  "scheduleAdherenceGap": 0.0019338010433531672,
+  "longHaulShare": 0.0021177848871265716,
+  "del15Rate": 0.16517493897477625,
+  "avgTaxiOutMin": 14.187144019528072,
+  "nasDelayPerDeparture": 4.016273393002441,
+  "weatherDelayPerDeparture": 0.41090317331163545,
+  "cancellationRate": 0.019154030327214685,
+  "paxGrowthYoy": 0.06630381546328823,
+  "dataCompleteness": 1
+}

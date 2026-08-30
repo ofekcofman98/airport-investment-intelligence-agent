@@ -42,12 +42,29 @@ export interface AirportYearMetrics {
   departuresPerformed: number;
   loadFactor: number; // passengers / seats
   scheduleAdherenceGap: number; // 1 - departuresPerformed / departuresScheduled
-  del15Rate: number; // share of departures delayed >= 15 min
-  avgTaxiOutMin: number;
-  nasDelayPerDeparture: number;
-  weatherDelayPerDeparture: number; // confounder control, not a scoring input
-  cancellationRate: number;
+  /**
+   * del15Rate, avgTaxiOutMin, nasDelayPerDeparture, weatherDelayPerDeparture,
+   * and cancellationRate are all On-Time-Performance-derived and nullable:
+   * null means the build step had no On-Time sample for this airport (a
+   * missing component per src/scoring/CLAUDE.md "Missing-component
+   * renormalization" — dropped and renormalized, never scored as 0).
+   */
+  del15Rate: number | null; // share of departures delayed >= 15 min
+  avgTaxiOutMin: number | null;
+  nasDelayPerDeparture: number | null;
+  weatherDelayPerDeparture: number | null; // confounder control, not a scoring input
+  cancellationRate: number | null;
   longHaulShare: number; // departures with distance >= 2500mi / total
+  /**
+   * passengers(year) / passengers(year-1) - 1. Requires the prior year's
+   * T-100 file at build time (see src/data/build.ts); null if that file
+   * was unavailable or reported zero passengers for this airport. Folded
+   * directly into this record rather than a separate growth type/call —
+   * the on-disk snapshot already merges it per-airport (see
+   * data/processed/{CODE}.{year}.json), so a separate abstraction here
+   * would be a distinction the data itself doesn't make.
+   */
+  paxGrowthYoy: number | null;
   /**
    * Data completeness signal carried from the build step (e.g. a month of
    * On-Time records missing for this airport). Consumed by scoring to set
@@ -55,13 +72,6 @@ export interface AirportYearMetrics {
    * src/scoring/CLAUDE.md "Error handling".
    */
   dataCompleteness: number; // 0-1
-}
-
-/** Derived, cross-year field — requires both the analysis year and the prior year. */
-export interface AirportGrowth {
-  code: AirportCode;
-  year: number; // the analysis year (e.g. 2025)
-  paxGrowthYoy: number; // passengers(year) / passengers(year-1) - 1
 }
 
 export interface SnapshotManifest {
@@ -90,11 +100,12 @@ export interface AirportDataSource {
   /** Reference metadata for one code, or null if out of scope. */
   getAirportRef(code: AirportCode): AirportRef | null;
 
-  /** Measured metrics for one code/year, or null if unavailable. */
+  /**
+   * Measured metrics for one code/year, or null if unavailable. Includes
+   * `paxGrowthYoy` directly (see AirportYearMetrics) — there is no separate
+   * growth lookup.
+   */
   getYearMetrics(code: AirportCode, year: number): AirportYearMetrics | null;
-
-  /** YoY growth for one code as of the analysis year, or null if unavailable. */
-  getGrowth(code: AirportCode): AirportGrowth | null;
 
   /** Provenance/versioning info for the loaded snapshot. */
   getManifest(): SnapshotManifest;

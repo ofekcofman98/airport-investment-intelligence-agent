@@ -1,0 +1,18 @@
+{
+  "code": "DCA",
+  "year": 2025,
+  "passengers": 12012156,
+  "seats": 15889340,
+  "departuresScheduled": 148564,
+  "departuresPerformed": 144990,
+  "loadFactor": 0.7559883544565098,
+  "scheduleAdherenceGap": 0.024056972079373184,
+  "longHaulShare": 0,
+  "del15Rate": 0.22559508998921787,
+  "avgTaxiOutMin": 21.163224682756905,
+  "nasDelayPerDeparture": 3.1265654806336567,
+  "weatherDelayPerDeparture": 0.6946172348013602,
+  "cancellationRate": 0.022616731517509727,
+  "paxGrowthYoy": -0.058832691897855005,
+  "dataCompleteness": 1
+}

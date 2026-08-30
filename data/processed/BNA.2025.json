@@ -1,0 +1,18 @@
+{
+  "code": "BNA",
+  "year": 2025,
+  "passengers": 12619181,
+  "seats": 16561392,
+  "departuresScheduled": 110512,
+  "departuresPerformed": 113358,
+  "loadFactor": 0.7619637890341585,
+  "scheduleAdherenceGap": -0.025752859417981666,
+  "longHaulShare": 0.005875191870004764,
+  "del15Rate": 0.1950536630891274,
+  "avgTaxiOutMin": 15.329211385907605,
+  "nasDelayPerDeparture": 2.791647223518432,
+  "weatherDelayPerDeparture": 0.7202519832011199,
+  "cancellationRate": 0.009475387104229259,
+  "paxGrowthYoy": 0.04001936110975124,
+  "dataCompleteness": 1
+}

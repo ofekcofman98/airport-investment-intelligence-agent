@@ -1,0 +1,33 @@
+{
+  "builtAt": "2026-08-30T14:22:16.222Z",
+  "sources": [
+    {
+      "name": "BTS TranStats T-100 Segment (All Carriers), full year 2025",
+      "url": "https://www.transtats.bts.gov/DL_SelectFields.aspx?gnoyr_VQ=FMF",
+      "downloadedAt": "2026-08-30T13:03:57.392Z",
+      "btsRevisionStamp": null
+    },
+    {
+      "name": "BTS TranStats T-100 Segment (All Carriers), full year 2024 (prior-year growth basis)",
+      "url": "https://www.transtats.bts.gov/DL_SelectFields.aspx?gnoyr_VQ=FMF",
+      "downloadedAt": "2026-08-30T13:51:06.697Z",
+      "btsRevisionStamp": null
+    },
+    {
+      "name": "BTS TranStats On-Time Performance, single-month sample (March 2025)",
+      "url": "https://www.transtats.bts.gov/DL_SelectFields.aspx?gnoyr_VQ=FGJ",
+      "downloadedAt": "2026-08-30T13:47:41.705Z",
+      "btsRevisionStamp": null
+    }
+  ],
+  "analysisYear": 2025,
+  "priorYear": 2024,
+  "airportCount": 48,
+  "onTimeSampleMonth": "March 2025",
+  "dataQualityNotes": [
+    "Combined domestic+international T-100 release trims the last few months of pure-domestic data to keep a uniform end date across sources (SPEC.md §1). Verify full-year 2025 totals are not silently undercounting a recent quarter.",
+    "Delay-derived metrics (del15Rate, avgTaxiOutMin, nasDelayPerDeparture, weatherDelayPerDeparture, cancellationRate) are estimated from a single representative month (March 2025), not measured across the full year (SPEC.md §2 \"On-Time Performance sampling\"). dataCompleteness reflects this: 0.5 for full-year T-100 fields + 0.5 for the sampled On-Time fields, so a fully-present record is 1, not 1.0.",
+    "scheduleAdherenceGap can be negative (DEPARTURES_PERFORMED > DEPARTURES_SCHEDULED for some airports) — a known T-100 quirk, not an error; left signed, not clamped (SPEC.md §3).",
+    "Row-parse robustness: 2025 T-100 had 0 malformed rows (column-count mismatch) and 0 rows with missing/non-numeric DISTANCE; 2024 T-100 had 0 malformed and 0 bad-DISTANCE rows; On-Time sample had 0 malformed rows. Malformed rows were skipped when unsafe to index into; bad-DISTANCE rows were bucketed as short-haul (distance treated as 0)."
+  ]
+}

@@ -24,4 +24,24 @@ refusal. The LLM must never see a raw stack trace or exception — every tool
 result reaching the orchestrator is either a valid payload or a structured
 "refusal" shape, nothing else.
 
+## Required follow-ups (implement when this layer starts)
+
+Recorded now so they aren't skipped once `orchestrator.ts` exists — not
+implemented yet:
+
+- **KPI audit layer (output-consistency check).** A different failure mode
+  than "the LLM computes a number" (already prevented by ADR 0002): the LLM
+  could misquote or mis-round a value that a tool call already returned
+  correctly. Before finalizing a turn, cross-check every numeric claim in
+  the narration against that turn's tool results (tolerance ±0.5). On
+  mismatch, discard the narration and either regenerate once or fall back
+  to a templated response built directly from the tool's exact values.
+  Defense-in-depth on top of the LLM/deterministic split, not a
+  replacement for it.
+- **Tool-call round limit.** Cap agentic tool-calling rounds per turn
+  (`MAX_TOOL_ROUNDS = 5` in `orchestrator.ts`). If the cap is hit, make one
+  final LLM call with tools disabled, forcing a synthesized answer from
+  whatever data has already been gathered, instead of letting the loop
+  continue. Standard cost/latency safeguard for any tool-calling agent.
+
 See ADR 0001, ADR 0002, ADR 0007, ADR 0008.

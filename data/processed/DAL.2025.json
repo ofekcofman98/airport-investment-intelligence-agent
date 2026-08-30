@@ -1,0 +1,18 @@
+{
+  "code": "DAL",
+  "year": 2025,
+  "passengers": 8292264,
+  "seats": 11432244,
+  "departuresScheduled": 71373,
+  "departuresPerformed": 74197,
+  "loadFactor": 0.7253400119871479,
+  "scheduleAdherenceGap": -0.03956678295714067,
+  "longHaulShare": 0.00024259740959877083,
+  "del15Rate": 0.22939649578195975,
+  "avgTaxiOutMin": 12.447274497079817,
+  "nasDelayPerDeparture": 1.7983452303698897,
+  "weatherDelayPerDeparture": 0.8750811161583387,
+  "cancellationRate": 0.012812299807815503,
+  "paxGrowthYoy": -0.058408709146918425,
+  "dataCompleteness": 1
+}

@@ -1,0 +1,18 @@
+{
+  "code": "TPA",
+  "year": 2025,
+  "passengers": 12179173,
+  "seats": 15627083,
+  "departuresScheduled": 88894,
+  "departuresPerformed": 93242,
+  "loadFactor": 0.7793631735366094,
+  "scheduleAdherenceGap": -0.048912187549216,
+  "longHaulShare": 0.026372235687780184,
+  "del15Rate": 0.20614256825075833,
+  "avgTaxiOutMin": 18.59959555106168,
+  "nasDelayPerDeparture": 5.441734074823054,
+  "weatherDelayPerDeparture": 1.2171385237613752,
+  "cancellationRate": 0.017142857142857144,
+  "paxGrowthYoy": 0.0033892638626651372,
+  "dataCompleteness": 1
+}

@@ -1,0 +1,18 @@
+{
+  "code": "SAN",
+  "year": 2025,
+  "passengers": 12749643,
+  "seats": 15982371,
+  "departuresScheduled": 102675,
+  "departuresPerformed": 105334,
+  "loadFactor": 0.7977316381906039,
+  "scheduleAdherenceGap": -0.02589724859995135,
+  "longHaulShare": 0.055793950671198286,
+  "del15Rate": 0.18486541391569325,
+  "avgTaxiOutMin": 22.782249873031997,
+  "nasDelayPerDeparture": 3.328847130523108,
+  "weatherDelayPerDeparture": 0.6235398679532758,
+  "cancellationRate": 0.007935508250409371,
+  "paxGrowthYoy": -0.010609358314478179,
+  "dataCompleteness": 1
+}

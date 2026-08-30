@@ -1,0 +1,18 @@
+{
+  "code": "MDW",
+  "year": 2025,
+  "passengers": 9429775,
+  "seats": 12390115,
+  "departuresScheduled": 74985,
+  "departuresPerformed": 77109,
+  "loadFactor": 0.7610724355665787,
+  "scheduleAdherenceGap": -0.02832566513302659,
+  "longHaulShare": 0.00020749847618306552,
+  "del15Rate": 0.2094561084476773,
+  "avgTaxiOutMin": 13.468176558108778,
+  "nasDelayPerDeparture": 2.3293106298561748,
+  "weatherDelayPerDeparture": 0.5658786576293602,
+  "cancellationRate": 0.009335080248935474,
+  "paxGrowthYoy": -0.10028871593919986,
+  "dataCompleteness": 1
+}

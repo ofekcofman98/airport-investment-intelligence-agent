@@ -1,0 +1,18 @@
+{
+  "code": "FLL",
+  "year": 2025,
+  "passengers": 15681127,
+  "seats": 19810129,
+  "departuresScheduled": 108556,
+  "departuresPerformed": 117811,
+  "loadFactor": 0.7915711704855632,
+  "scheduleAdherenceGap": -0.08525553631305494,
+  "longHaulShare": 0.02639821408866744,
+  "del15Rate": 0.2406361645730091,
+  "avgTaxiOutMin": 19.56632476662441,
+  "nasDelayPerDeparture": 6.085513426299412,
+  "weatherDelayPerDeparture": 1.0466751181283853,
+  "cancellationRate": 0.01071713601641774,
+  "paxGrowthYoy": -0.08438373966042534,
+  "dataCompleteness": 1
+}

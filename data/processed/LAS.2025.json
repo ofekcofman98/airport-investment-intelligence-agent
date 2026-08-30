@@ -1,0 +1,18 @@
+{
+  "code": "LAS",
+  "year": 2025,
+  "passengers": 26666103,
+  "seats": 34197129,
+  "departuresScheduled": 191039,
+  "departuresPerformed": 209773,
+  "loadFactor": 0.7797760741844733,
+  "scheduleAdherenceGap": -0.09806374614607494,
+  "longHaulShare": 0.027725207724540336,
+  "del15Rate": 0.20527410670582477,
+  "avgTaxiOutMin": 17.68954968184043,
+  "nasDelayPerDeparture": 2.083210964268233,
+  "weatherDelayPerDeparture": 0.14769946157611355,
+  "cancellationRate": 0.0060207991242474,
+  "paxGrowthYoy": -0.058949363688692524,
+  "dataCompleteness": 1
+}

@@ -1,0 +1,18 @@
+{
+  "code": "MHT",
+  "year": 2025,
+  "passengers": 686314,
+  "seats": 903624,
+  "departuresScheduled": 10712,
+  "departuresPerformed": 10573,
+  "loadFactor": 0.759512806211433,
+  "scheduleAdherenceGap": 0.01297610156833462,
+  "longHaulShare": 0.0002837416059774898,
+  "del15Rate": 0.18385650224215247,
+  "avgTaxiOutMin": 14.558295964125561,
+  "nasDelayPerDeparture": 3.0291479820627805,
+  "weatherDelayPerDeparture": 0,
+  "cancellationRate": 0.02832244008714597,
+  "paxGrowthYoy": 0.0820772684846498,
+  "dataCompleteness": 1
+}

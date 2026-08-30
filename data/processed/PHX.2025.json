@@ -1,0 +1,18 @@
+{
+  "code": "PHX",
+  "year": 2025,
+  "passengers": 25181582,
+  "seats": 31931248,
+  "departuresScheduled": 214247,
+  "departuresPerformed": 221853,
+  "loadFactor": 0.7886187849594855,
+  "scheduleAdherenceGap": -0.03550108052854872,
+  "longHaulShare": 0.01796685192447251,
+  "del15Rate": 0.20635832115264147,
+  "avgTaxiOutMin": 16.455314261850074,
+  "nasDelayPerDeparture": 1.6612549592816872,
+  "weatherDelayPerDeparture": 0.25584673209438297,
+  "cancellationRate": 0.00550306302564635,
+  "paxGrowthYoy": -0.021664268314757096,
+  "dataCompleteness": 1
+}

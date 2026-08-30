@@ -1,0 +1,18 @@
+{
+  "code": "IAD",
+  "year": 2025,
+  "passengers": 13951650,
+  "seats": 17403459,
+  "departuresScheduled": 112601,
+  "departuresPerformed": 129322,
+  "loadFactor": 0.8016596011172262,
+  "scheduleAdherenceGap": -0.1484977930924236,
+  "longHaulShare": 0.14347906775335983,
+  "del15Rate": 0.14145810663764963,
+  "avgTaxiOutMin": 20.546028291621326,
+  "nasDelayPerDeparture": 3.823939064200218,
+  "weatherDelayPerDeparture": 1.03721436343852,
+  "cancellationRate": 0.004333694474539545,
+  "paxGrowthYoy": 0.05605673419584156,
+  "dataCompleteness": 1
+}

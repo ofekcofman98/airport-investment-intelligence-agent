@@ -1,0 +1,18 @@
+{
+  "code": "DFW",
+  "year": 2025,
+  "passengers": 41352438,
+  "seats": 50143306,
+  "departuresScheduled": 358543,
+  "departuresPerformed": 362591,
+  "loadFactor": 0.8246851135024883,
+  "scheduleAdherenceGap": -0.011290138142426409,
+  "longHaulShare": 0.03680731181965355,
+  "del15Rate": 0.251342396892494,
+  "avgTaxiOutMin": 19.671807761148557,
+  "nasDelayPerDeparture": 3.325526486157127,
+  "weatherDelayPerDeparture": 1.1204158574203131,
+  "cancellationRate": 0.03085440118102971,
+  "paxGrowthYoy": -0.025943450058471762,
+  "dataCompleteness": 1
+}

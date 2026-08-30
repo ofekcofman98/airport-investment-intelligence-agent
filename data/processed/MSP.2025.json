@@ -1,0 +1,18 @@
+{
+  "code": "MSP",
+  "year": 2025,
+  "passengers": 17509548,
+  "seats": 21639193,
+  "departuresScheduled": 154029,
+  "departuresPerformed": 158641,
+  "loadFactor": 0.8091590106895391,
+  "scheduleAdherenceGap": -0.029942413441624627,
+  "longHaulShare": 0.03166268493012525,
+  "del15Rate": 0.17481623521891979,
+  "avgTaxiOutMin": 18.230105465004794,
+  "nasDelayPerDeparture": 3.511771599019921,
+  "weatherDelayPerDeparture": 1.3348247576435497,
+  "cancellationRate": 0.006981910504601714,
+  "paxGrowthYoy": -0.031010994296929106,
+  "dataCompleteness": 1
+}

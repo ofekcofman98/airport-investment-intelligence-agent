@@ -1,0 +1,18 @@
+{
+  "code": "IAH",
+  "year": 2025,
+  "passengers": 23345172,
+  "seats": 29200876,
+  "departuresScheduled": 207906,
+  "departuresPerformed": 219975,
+  "loadFactor": 0.7994682077345899,
+  "scheduleAdherenceGap": -0.05805027271940211,
+  "longHaulShare": 0.04440050005682464,
+  "del15Rate": 0.20768601798855274,
+  "avgTaxiOutMin": 20.806623058053965,
+  "nasDelayPerDeparture": 3.484055600981194,
+  "weatherDelayPerDeparture": 0.6860179885527392,
+  "cancellationRate": 0.00659965478728805,
+  "paxGrowthYoy": -0.005846956579062201,
+  "dataCompleteness": 1
+}

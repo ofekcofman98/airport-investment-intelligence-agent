@@ -1,0 +1,18 @@
+{
+  "code": "DTW",
+  "year": 2025,
+  "passengers": 16330068,
+  "seats": 20589145,
+  "departuresScheduled": 152908,
+  "departuresPerformed": 155233,
+  "loadFactor": 0.7931396859850178,
+  "scheduleAdherenceGap": -0.015205221440343308,
+  "longHaulShare": 0.03588798773456675,
+  "del15Rate": 0.18012059910523245,
+  "avgTaxiOutMin": 17.08626726317837,
+  "nasDelayPerDeparture": 2.766582376969461,
+  "weatherDelayPerDeparture": 0.973156973351488,
+  "cancellationRate": 0.008390394444980229,
+  "paxGrowthYoy": 0.01196844456326085,
+  "dataCompleteness": 1
+}

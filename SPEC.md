@@ -37,6 +37,18 @@ explicitly for an unknown airport rather than guessing — an out-of-universe
 query returns a structured "not in scope" result, never an LLM-improvised
 number.
 
+**Minimum volume for ranking:** airports below **1,000,000 annual
+passengers** (analysis-year) are excluded from `rank_airports` results. A
+low-base airport can post a headline `pax_growth_yoy` that is statistically
+meaningless (3 → 6 departures = "+100%") and would otherwise top a regional
+expansion ranking on noise. These airports remain fully queryable for
+single-metric lookup, explanation, and comparison — they are excluded only
+from ranking, and **visibly**: `rank_airports` returns an `excluded: [{
+code, reason: "below_min_volume", passengers }]` list alongside `results`,
+which the agent must mention rather than silently drop. The threshold is a
+named constant in `src/scoring/weights.ts`, applied in
+`src/scoring/rankCompare.ts` before ranking.
+
 **Explicitly out of scope:** non-US airports; cargo-only analysis; capital
 cost / ROI / valuation modelling (we score *opportunity*, not project
 economics); real-time flight status; slot-allocation and gate-count data
@@ -57,6 +69,22 @@ download date and BTS revision stamp. TranStats downloads are form-driven —
 if the scripted download fails, manual pull will be requested rather than
 substituting synthetic data.
 
+**On-Time Performance sampling (stated approximation, not a scope gap).**
+On-Time Performance is flight-level (one row per flight), not
+segment-aggregated like T-100: a single month is ~237MB, a full year would
+be multiple GB. Delay-derived metrics (`del15_rate`, `avg_taxi_out_min`,
+`nas_delay_per_departure`, `weather_delay_per_departure`,
+`cancellation_rate`) are therefore estimated from a **single representative
+month — March 2025** — rather than measured across the full year. March
+was chosen deliberately over January/February to avoid winter-weather
+seasonal distortion (holiday-adjacent and snow-driven delays would bias
+these signals toward weather rather than structural/volume causes). This
+is a stated approximation: the manifest and `dataCompleteness` reflect it
+directly (see §3), and `explain_score` carries a one-sentence seasonal
+caveat for airports with strong seasonal variation (e.g. `ANC`). T-100
+(`passengers`, `seats`, `load_factor`, `schedule_adherence_gap`,
+`long_haul_share`, `pax_growth_yoy`) remains full-year, both 2024 and 2025.
+
 ## 3. Base metrics (measured, not derived)
 
 Per airport, per year, computed deterministically from the snapshot:
@@ -64,6 +92,20 @@ Per airport, per year, computed deterministically from the snapshot:
 - `passengers`, `seats`, `departures_performed`, `departures_scheduled`
 - `load_factor` = passengers / seats
 - `schedule_adherence_gap` = 1 − departures_performed / departures_scheduled
+
+  > **Known T-100 quirk — this value can be negative.** `DEPARTURES_PERFORMED`
+  > can exceed `DEPARTURES_SCHEDULED` because BTS counts non-scheduled
+  > operations (charter, extra-section, ad-hoc capacity) as performed even
+  > though they were never in the published schedule. A negative gap is
+  > **not** treated as a data error and is **not** clamped to 0 — it is
+  > left signed, since min-max normalization across the in-scope universe
+  > already handles the sign correctly for scoring. It is also
+  > interpretively different from a positive gap: it can indicate an
+  > airport adding capacity in response to demand pressure rather than
+  > failing to meet its schedule. `explain_score`/`describe_methodology`
+  > must carry a one-sentence version of this interpretive note wherever
+  > `schedule_adherence_gap` appears in a scored breakdown, the same way
+  > the weather-delay confounder note is carried for congestion (§4).
 - `del15_rate` = share of departures delayed ≥ 15 min
 - `avg_taxi_out_min`
 - `nas_delay_per_departure` (NAS = National Airspace System delay minutes —
@@ -72,6 +114,20 @@ Per airport, per year, computed deterministically from the snapshot:
   input)
 - `cancellation_rate`
 - `pax_growth_yoy` = passengers(2025) / passengers(2024) − 1
+
+  > **Coverage-parity check performed, not assumed.** Before trusting this
+  > ratio, `build.ts` was verified to compare equal-length periods: both
+  > the 2024 and 2025 T-100 files contain all 12 months, with comparable
+  > row counts and monthly passenger totals in each (ruling out the
+  > domestic/international uniform-cutoff trim from §1 as a factor here —
+  > that trim affects how recent the *snapshot* is, not month coverage
+  > within a completed year). A per-airport spot check (e.g. `ATL`) showed
+  > the 2025 decline is consistent across every individual month, not
+  > concentrated in a missing or partial tail month. The broad-based
+  > decline seen across most large-hub airports (roughly -1% to -15%
+  > YoY) against a roughly flat nationwide total is read as a real
+  > traffic-distribution signal (an observation for the analysis, not a
+  > data defect), not corrected or normalized away.
 - `long_haul_share` = departures with `DISTANCE` ≥ 2,500 mi / total
   departures (buckets: short < 1,000 mi; medium 1,000–2,499 mi; long ≥ 2,500 mi)
 
@@ -95,7 +151,12 @@ named constants in one versioned file and surfaced in every explanation.
 and upstream late aircraft. `NAS_DELAY` is used as the best available volume
 signal, and `weather_delay_per_departure` is reported alongside every
 congestion answer so an analyst can discount weather-driven airports (ANC,
-BOS).
+BOS). All four delay-derived signals here (`del15_rate`,
+`nas_delay_per_departure`, `avg_taxi_out_min`, `cancellation_rate`) are
+estimated from the March-2025 sample described in §2 — `explain_score`
+carries a one-sentence seasonal caveat for airports with strong seasonal
+traffic variation (e.g. `ANC`), noting the score reflects one month, not a
+full-year measurement.
 
 **Unmet Demand Score** — demand the airport cannot currently serve:
 
@@ -123,6 +184,16 @@ Every score returns a **contribution breakdown** (per-signal normalized
 value × weight), a `confidence` field (downgraded on missing inputs or thin
 volume), and a `normalization` object (see §4a). The LLM narrates the
 breakdown; it never produces it.
+
+**Missing components.** If an airport lacks an input signal (e.g. no
+On-Time records for that year), that component is *dropped*, not scored as
+0 — scoring a gap as 0 would penalize missing data as if it were poor
+performance. The remaining components' weights are renormalized to sum to
+1.0 across the signals actually present, via a shared
+`renormalizeWeights(present, weights)` helper in `weights.ts`. `confidence`
+is reduced in proportion to the dropped weight
+(`confidence = dataCompleteness × retainedWeightShare`). Every scored
+payload lists which components were dropped.
 
 Two tradeoffs in this formula design — the signal overlap across composed
 scores, and the heuristic (not fitted) nature of the weights — are recorded
@@ -176,8 +247,11 @@ scored payload.
 6. **Follow-up** — "What about JFK?" resolved against per-session history
 
 **Refusal cases (the agent declines, not improvises):** airports outside the
-universe; years outside 2024–2025; capital cost / ROI / valuation
-questions; anything requiring gate, runway, or slot data.
+universe; any year other than **2025** (the only independently queryable
+year — 2024 is background-only, loaded per §1 solely to compute
+`pax_growth_yoy`, and is never returned by `get_airport_metrics` on its
+own); capital cost / ROI / valuation questions; anything requiring gate,
+runway, or slot data.
 
 ## 6. Agent tool surface (LLM chooses; code computes)
 
@@ -190,6 +264,9 @@ questions; anything requiring gate, runway, or slot data.
 All four assignment example questions answered end-to-end from the CLI,
 each with a number traceable to a pure function, a stated formula, and a
 stated uncertainty. Scoring layer covered by unit tests with no network or
-LLM dependency — including tests for `effectiveRawWeights()` summing to 1.0
-and for the relative-normalization caveat being present on every scored
-payload.
+LLM dependency — including tests for `effectiveRawWeights()` summing to 1.0,
+for the relative-normalization caveat being present on every scored
+payload, for a missing-component case still summing retained weights to 1.0
+with strictly lower `confidence` than the complete case, and for
+`rankCompare.ts` excluding a sub-threshold airport from `results` while
+listing it in `excluded`.

@@ -1,0 +1,18 @@
+{
+  "code": "MSY",
+  "year": 2025,
+  "passengers": 6261703,
+  "seats": 8537559,
+  "departuresScheduled": 54166,
+  "departuresPerformed": 54891,
+  "loadFactor": 0.7334301291504984,
+  "scheduleAdherenceGap": -0.01338478012037081,
+  "longHaulShare": 0.004190122242261937,
+  "del15Rate": 0.21476230191826523,
+  "avgTaxiOutMin": 13.089866555462885,
+  "nasDelayPerDeparture": 3.580483736447039,
+  "weatherDelayPerDeparture": 1.0264804003336114,
+  "cancellationRate": 0.0086812732534105,
+  "paxGrowthYoy": -0.050319239515630776,
+  "dataCompleteness": 1
+}

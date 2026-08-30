@@ -1,0 +1,18 @@
+{
+  "code": "PWM",
+  "year": 2025,
+  "passengers": 1287476,
+  "seats": 1562837,
+  "departuresScheduled": 15067,
+  "departuresPerformed": 14834,
+  "loadFactor": 0.8238069613145836,
+  "scheduleAdherenceGap": 0.015464259640273426,
+  "longHaulShare": 0,
+  "del15Rate": 0.13786764705882354,
+  "avgTaxiOutMin": 16.810661764705884,
+  "nasDelayPerDeparture": 5.327205882352941,
+  "weatherDelayPerDeparture": 0.5551470588235294,
+  "cancellationRate": 0.009107468123861567,
+  "paxGrowthYoy": 0.05323625654450259,
+  "dataCompleteness": 1
+}

@@ -1,0 +1,18 @@
+{
+  "code": "LAX",
+  "year": 2025,
+  "passengers": 36766912,
+  "seats": 45049744,
+  "departuresScheduled": 221820,
+  "departuresPerformed": 273613,
+  "loadFactor": 0.8161403092545876,
+  "scheduleAdherenceGap": -0.23349111892525465,
+  "longHaulShare": 0.19025046324553294,
+  "del15Rate": 0.15604681404421328,
+  "avgTaxiOutMin": 17.36918694656016,
+  "nasDelayPerDeparture": 2.126323611369125,
+  "weatherDelayPerDeparture": 0.49786364480772805,
+  "cancellationRate": 0.003947449577499537,
+  "paxGrowthYoy": -0.038544753839201196,
+  "dataCompleteness": 1
+}

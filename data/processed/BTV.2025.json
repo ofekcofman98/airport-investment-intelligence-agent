@@ -1,0 +1,18 @@
+{
+  "code": "BTV",
+  "year": 2025,
+  "passengers": 709116,
+  "seats": 871757,
+  "departuresScheduled": 10125,
+  "departuresPerformed": 9938,
+  "loadFactor": 0.8134331011967785,
+  "scheduleAdherenceGap": 0.018469135802469117,
+  "longHaulShare": 0.00030187160394445564,
+  "del15Rate": 0.13743218806509946,
+  "avgTaxiOutMin": 22.292947558770344,
+  "nasDelayPerDeparture": 3.871609403254973,
+  "weatherDelayPerDeparture": 1.8625678119349005,
+  "cancellationRate": 0.01601423487544484,
+  "paxGrowthYoy": 0.057066278691896954,
+  "dataCompleteness": 1
+}

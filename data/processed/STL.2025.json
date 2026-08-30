@@ -1,0 +1,18 @@
+{
+  "code": "STL",
+  "year": 2025,
+  "passengers": 7526915,
+  "seats": 10173410,
+  "departuresScheduled": 72727,
+  "departuresPerformed": 73542,
+  "loadFactor": 0.739861560676312,
+  "scheduleAdherenceGap": -0.011206292023595132,
+  "longHaulShare": 0.002134834516330804,
+  "del15Rate": 0.1935846933033202,
+  "avgTaxiOutMin": 12.025511161132997,
+  "nasDelayPerDeparture": 2.9315325454886514,
+  "weatherDelayPerDeparture": 0.5327330707184393,
+  "cancellationRate": 0.008923591745677636,
+  "paxGrowthYoy": -0.04416534259573435,
+  "dataCompleteness": 1
+}

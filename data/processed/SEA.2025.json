@@ -1,0 +1,18 @@
+{
+  "code": "SEA",
+  "year": 2025,
+  "passengers": 25432206,
+  "seats": 30964274,
+  "departuresScheduled": 201907,
+  "departuresPerformed": 214049,
+  "loadFactor": 0.8213402968853718,
+  "scheduleAdherenceGap": -0.060136597542432835,
+  "longHaulShare": 0.11135767978360095,
+  "del15Rate": 0.1753909990424513,
+  "avgTaxiOutMin": 20.95930418129588,
+  "nasDelayPerDeparture": 2.3073731248005105,
+  "weatherDelayPerDeparture": 0.5087775295244175,
+  "cancellationRate": 0.003577959767830166,
+  "paxGrowthYoy": -0.0013751006882335437,
+  "dataCompleteness": 1
+}

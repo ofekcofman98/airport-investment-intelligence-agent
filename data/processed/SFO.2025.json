@@ -1,0 +1,18 @@
+{
+  "code": "SFO",
+  "year": 2025,
+  "passengers": 26482764,
+  "seats": 32180069,
+  "departuresScheduled": 167482,
+  "departuresPerformed": 189865,
+  "loadFactor": 0.822955475950036,
+  "scheduleAdherenceGap": -0.13364421251238934,
+  "longHaulShare": 0.2513417428172649,
+  "del15Rate": 0.18965809072444142,
+  "avgTaxiOutMin": 21.133209207853756,
+  "nasDelayPerDeparture": 3.0366452268111037,
+  "weatherDelayPerDeparture": 0.2925693974272173,
+  "cancellationRate": 0.005972911584083453,
+  "paxGrowthYoy": 0.04669487230746272,
+  "dataCompleteness": 1
+}

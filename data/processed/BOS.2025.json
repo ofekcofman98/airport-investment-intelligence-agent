@@ -1,0 +1,18 @@
+{
+  "code": "BOS",
+  "year": 2025,
+  "passengers": 21105979,
+  "seats": 25867341,
+  "departuresScheduled": 176095,
+  "departuresPerformed": 191544,
+  "loadFactor": 0.8159315253933522,
+  "scheduleAdherenceGap": -0.08773105426048433,
+  "longHaulShare": 0.1412469197677818,
+  "del15Rate": 0.18389775317486162,
+  "avgTaxiOutMin": 19.420221426245522,
+  "nasDelayPerDeparture": 3.820091175512862,
+  "weatherDelayPerDeparture": 0.1368446760013025,
+  "cancellationRate": 0.006229269476579565,
+  "paxGrowthYoy": -0.00820004999887225,
+  "dataCompleteness": 1
+}

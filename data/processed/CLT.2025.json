@@ -1,0 +1,18 @@
+{
+  "code": "CLT",
+  "year": 2025,
+  "passengers": 25907691,
+  "seats": 32489966,
+  "departuresScheduled": 259234,
+  "departuresPerformed": 261803,
+  "loadFactor": 0.7974059129517095,
+  "scheduleAdherenceGap": -0.00990996551378287,
+  "longHaulShare": 0.011523932116897057,
+  "del15Rate": 0.21215388107126645,
+  "avgTaxiOutMin": 21.431230140717204,
+  "nasDelayPerDeparture": 2.820188379482524,
+  "weatherDelayPerDeparture": 0.7539718565592374,
+  "cancellationRate": 0.016682475032081683,
+  "paxGrowthYoy": -0.09343684960718979,
+  "dataCompleteness": 1
+}

@@ -1,0 +1,18 @@
+{
+  "code": "PHL",
+  "year": 2025,
+  "passengers": 14812361,
+  "seats": 18293432,
+  "departuresScheduled": 143830,
+  "departuresPerformed": 144705,
+  "loadFactor": 0.8097092442795862,
+  "scheduleAdherenceGap": -0.0060835708822915,
+  "longHaulShare": 0.05748246432396945,
+  "del15Rate": 0.1785572468563865,
+  "avgTaxiOutMin": 19.28259430840503,
+  "nasDelayPerDeparture": 3.8108537392455326,
+  "weatherDelayPerDeparture": 0.9009927200529451,
+  "cancellationRate": 0.015378600286719666,
+  "paxGrowthYoy": -0.021518601527059644,
+  "dataCompleteness": 1
+}

@@ -1,0 +1,18 @@
+{
+  "code": "SLC",
+  "year": 2025,
+  "passengers": 13467245,
+  "seats": 16666411,
+  "departuresScheduled": 125108,
+  "departuresPerformed": 126886,
+  "loadFactor": 0.8080470954424441,
+  "scheduleAdherenceGap": -0.014211721072992844,
+  "longHaulShare": 0.018260485790394528,
+  "del15Rate": 0.1507851360577392,
+  "avgTaxiOutMin": 18.627523651614162,
+  "nasDelayPerDeparture": 2.0425241392763094,
+  "weatherDelayPerDeparture": 0.3229298741831659,
+  "cancellationRate": 0.002238224990268587,
+  "paxGrowthYoy": -0.007546328032433602,
+  "dataCompleteness": 1
+}

@@ -1,0 +1,18 @@
+{
+  "code": "ATL",
+  "year": 2025,
+  "passengers": 51517113,
+  "seats": 62398318,
+  "departuresScheduled": 384476,
+  "departuresPerformed": 393275,
+  "loadFactor": 0.8256170142278515,
+  "scheduleAdherenceGap": -0.022885693775424265,
+  "longHaulShare": 0.04460237747123514,
+  "del15Rate": 0.2166235347845943,
+  "avgTaxiOutMin": 16.094687166996497,
+  "nasDelayPerDeparture": 3.0573907748515756,
+  "weatherDelayPerDeparture": 0.646787943370376,
+  "cancellationRate": 0.007254042617500378,
+  "paxGrowthYoy": -0.020896907172214263,
+  "dataCompleteness": 1
+}

@@ -1,0 +1,18 @@
+{
+  "code": "ORD",
+  "year": 2025,
+  "passengers": 40848877,
+  "seats": 50090954,
+  "departuresScheduled": 387314,
+  "departuresPerformed": 417952,
+  "loadFactor": 0.8154940910089274,
+  "scheduleAdherenceGap": -0.07910377626421972,
+  "longHaulShare": 0.07189581578745885,
+  "del15Rate": 0.21969354639937558,
+  "avgTaxiOutMin": 23.711169535390052,
+  "nasDelayPerDeparture": 3.7909871420942367,
+  "weatherDelayPerDeparture": 1.327979295896151,
+  "cancellationRate": 0.009641985353946298,
+  "paxGrowthYoy": 0.05449220867593452,
+  "dataCompleteness": 1
+}

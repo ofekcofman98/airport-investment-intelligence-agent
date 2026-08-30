@@ -1,0 +1,18 @@
+{
+  "code": "BWI",
+  "year": 2025,
+  "passengers": 12321193,
+  "seats": 16397164,
+  "departuresScheduled": 101437,
+  "departuresPerformed": 104409,
+  "loadFactor": 0.7514221971555569,
+  "scheduleAdherenceGap": -0.02929897374725199,
+  "longHaulShare": 0.008476280780392495,
+  "del15Rate": 0.22778345250255363,
+  "avgTaxiOutMin": 14.245786516853933,
+  "nasDelayPerDeparture": 2.893258426966292,
+  "weatherDelayPerDeparture": 0.45097037793667005,
+  "cancellationRate": 0.011984357259997478,
+  "paxGrowthYoy": -0.07367836776279801,
+  "dataCompleteness": 1
+}

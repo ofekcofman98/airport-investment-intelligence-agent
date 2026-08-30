@@ -1,0 +1,18 @@
+{
+  "code": "HNL",
+  "year": 2025,
+  "passengers": 10539363,
+  "seats": 13150760,
+  "departuresScheduled": 84026,
+  "departuresPerformed": 96092,
+  "loadFactor": 0.8014261533173748,
+  "scheduleAdherenceGap": -0.14359841001594753,
+  "longHaulShare": 0.34781251300836696,
+  "del15Rate": 0.13385974807294604,
+  "avgTaxiOutMin": 16.33427335965407,
+  "nasDelayPerDeparture": 0.4004512126339537,
+  "weatherDelayPerDeparture": 0.3530738860688099,
+  "cancellationRate": 0.012072808320950966,
+  "paxGrowthYoy": 0.0009905086307882005,
+  "dataCompleteness": 1
+}

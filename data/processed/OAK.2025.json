@@ -1,0 +1,18 @@
+{
+  "code": "OAK",
+  "year": 2025,
+  "passengers": 4561906,
+  "seats": 6238506,
+  "departuresScheduled": 45462,
+  "departuresPerformed": 51176,
+  "loadFactor": 0.7312497575541324,
+  "scheduleAdherenceGap": -0.12568738726848805,
+  "longHaulShare": 0.017742691886821947,
+  "del15Rate": 0.14944769330734242,
+  "avgTaxiOutMin": 12.442495126705653,
+  "nasDelayPerDeparture": 0.6364522417153996,
+  "weatherDelayPerDeparture": 0.016244314489928524,
+  "cancellationRate": 0.005171299288946348,
+  "paxGrowthYoy": -0.1468674879498627,
+  "dataCompleteness": 1
+}

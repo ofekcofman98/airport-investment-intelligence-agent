@@ -1,0 +1,18 @@
+{
+  "code": "DEN",
+  "year": 2025,
+  "passengers": 40110841,
+  "seats": 49379616,
+  "departuresScheduled": 335716,
+  "departuresPerformed": 342664,
+  "loadFactor": 0.8122955229137464,
+  "scheduleAdherenceGap": -0.02069606453073436,
+  "longHaulShare": 0.01781336819741788,
+  "del15Rate": 0.18930444956032758,
+  "avgTaxiOutMin": 18.253387175906706,
+  "nasDelayPerDeparture": 2.1494886213533606,
+  "weatherDelayPerDeparture": 0.39604483526436957,
+  "cancellationRate": 0.005927593322078409,
+  "paxGrowthYoy": -0.001936069062684842,
+  "dataCompleteness": 1
+}

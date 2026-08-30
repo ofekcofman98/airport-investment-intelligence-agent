@@ -1,0 +1,18 @@
+{
+  "code": "LGA",
+  "year": 2025,
+  "passengers": 16280450,
+  "seats": 20078660,
+  "departuresScheduled": 171461,
+  "departuresPerformed": 171960,
+  "loadFactor": 0.8108334918764499,
+  "scheduleAdherenceGap": -0.002910282804836184,
+  "longHaulShare": 0.00006978367062107467,
+  "del15Rate": 0.18389975660326333,
+  "avgTaxiOutMin": 22.541692959524024,
+  "nasDelayPerDeparture": 4.08798341296313,
+  "weatherDelayPerDeparture": 0.4772378977733706,
+  "cancellationRate": 0.011407182960520453,
+  "paxGrowthYoy": -0.026068109936403072,
+  "dataCompleteness": 1
+}

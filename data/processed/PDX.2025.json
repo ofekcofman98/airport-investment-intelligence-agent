@@ -1,0 +1,18 @@
+{
+  "code": "PDX",
+  "year": 2025,
+  "passengers": 9074146,
+  "seats": 11030307,
+  "departuresScheduled": 85016,
+  "departuresPerformed": 88909,
+  "loadFactor": 0.8226557973409081,
+  "scheduleAdherenceGap": -0.0457913804460337,
+  "longHaulShare": 0.047250559560899345,
+  "del15Rate": 0.12220817530552044,
+  "avgTaxiOutMin": 14.84850400337126,
+  "nasDelayPerDeparture": 2.0686894226717234,
+  "weatherDelayPerDeparture": 0.26801517067003794,
+  "cancellationRate": 0.0029411764705882353,
+  "paxGrowthYoy": 0.04868421371965215,
+  "dataCompleteness": 1
+}

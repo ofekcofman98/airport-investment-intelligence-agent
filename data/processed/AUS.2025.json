@@ -1,0 +1,18 @@
+{
+  "code": "AUS",
+  "year": 2025,
+  "passengers": 10762926,
+  "seats": 14072317,
+  "departuresScheduled": 91111,
+  "departuresPerformed": 94801,
+  "loadFactor": 0.7648297007521931,
+  "scheduleAdherenceGap": -0.04050004939030405,
+  "longHaulShare": 0.009968249280070885,
+  "del15Rate": 0.1925661774790838,
+  "avgTaxiOutMin": 15.133589356741188,
+  "nasDelayPerDeparture": 2.524619393773145,
+  "weatherDelayPerDeparture": 1.0955973117542175,
+  "cancellationRate": 0.010316275281661463,
+  "paxGrowthYoy": -0.003952290439625306,
+  "dataCompleteness": 1
+}

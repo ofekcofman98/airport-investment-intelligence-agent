@@ -1,0 +1,18 @@
+{
+  "code": "BDL",
+  "year": 2025,
+  "passengers": 3289186,
+  "seats": 4109384,
+  "departuresScheduled": 30243,
+  "departuresPerformed": 31574,
+  "loadFactor": 0.8004085283828428,
+  "scheduleAdherenceGap": -0.044010184174850364,
+  "longHaulShare": 0.008392981567112181,
+  "del15Rate": 0.16202270381836945,
+  "avgTaxiOutMin": 14.671826625386997,
+  "nasDelayPerDeparture": 3.7523219814241484,
+  "weatherDelayPerDeparture": 0.4742002063983488,
+  "cancellationRate": 0.013740458015267175,
+  "paxGrowthYoy": -0.003100850847286063,
+  "dataCompleteness": 1
+}

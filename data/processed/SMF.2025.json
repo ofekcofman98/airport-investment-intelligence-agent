@@ -1,0 +1,18 @@
+{
+  "code": "SMF",
+  "year": 2025,
+  "passengers": 6834378,
+  "seats": 8928331,
+  "departuresScheduled": 61960,
+  "departuresPerformed": 65060,
+  "loadFactor": 0.765470948601704,
+  "scheduleAdherenceGap": -0.05003227888960615,
+  "longHaulShare": 0.015124500461112819,
+  "del15Rate": 0.16024973985431842,
+  "avgTaxiOutMin": 13.444536940686785,
+  "nasDelayPerDeparture": 1.2260145681581687,
+  "weatherDelayPerDeparture": 0.15067637877211237,
+  "cancellationRate": 0.0045576962916925624,
+  "paxGrowthYoy": 0.01805131266836235,
+  "dataCompleteness": 1
+}

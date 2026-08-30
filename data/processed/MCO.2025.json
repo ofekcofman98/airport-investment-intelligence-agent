@@ -1,0 +1,18 @@
+{
+  "code": "MCO",
+  "year": 2025,
+  "passengers": 28079239,
+  "seats": 34500508,
+  "departuresScheduled": 178437,
+  "departuresPerformed": 194855,
+  "loadFactor": 0.813879001433834,
+  "scheduleAdherenceGap": -0.09201006517706523,
+  "longHaulShare": 0.04056349593287316,
+  "del15Rate": 0.2027008868583714,
+  "avgTaxiOutMin": 20.96083042192959,
+  "nasDelayPerDeparture": 4.876914807847353,
+  "weatherDelayPerDeparture": 0.7196990056436442,
+  "cancellationRate": 0.012407935770685422,
+  "paxGrowthYoy": 0.004614123089244915,
+  "dataCompleteness": 1
+}

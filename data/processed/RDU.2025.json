@@ -1,0 +1,18 @@
+{
+  "code": "RDU",
+  "year": 2025,
+  "passengers": 7742715,
+  "seats": 10027588,
+  "departuresScheduled": 70177,
+  "departuresPerformed": 72260,
+  "loadFactor": 0.7721413165359406,
+  "scheduleAdherenceGap": -0.029682089573507042,
+  "longHaulShare": 0.01592859119845004,
+  "del15Rate": 0.16806352007057784,
+  "avgTaxiOutMin": 16.600573445081604,
+  "nasDelayPerDeparture": 3.4636082928981033,
+  "weatherDelayPerDeparture": 0.6711513012792236,
+  "cancellationRate": 0.009827473247433938,
+  "paxGrowthYoy": 0.014832327616657981,
+  "dataCompleteness": 1
+}

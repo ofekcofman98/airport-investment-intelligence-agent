@@ -21,4 +21,26 @@ refusal — never an uncaught exception. Missing or partial underlying data
 is reflected via the existing `confidence` field, not a crash: a scoring
 function degrades its confidence, it doesn't throw for thin data.
 
+## Missing-component renormalization
+
+A component score is never computed as 0 for a signal the airport lacks.
+`weights.ts` exports `renormalizeWeights(present, weights)`, the single
+place this happens — it rescales the weights of the signals actually
+present back up to sum to 1.0. `confidence` for that score is then
+`dataCompleteness × retainedWeightShare`, so thinner data always yields
+strictly lower confidence than the complete case. Every composed score
+(`proxyScores.ts`) reports which raw signals were dropped. Test required:
+a missing-component case sums retained weights to 1.0 and has lower
+confidence than the same airport with full data.
+
+## Minimum-volume threshold (ranking scope, SPEC §1)
+
+`rankCompare.ts` filters out airports below the SPEC §1 minimum-volume
+constant (declared in `weights.ts`) **before** ranking — never after, and
+never silently: excluded airports are returned in a separate `excluded`
+list with a reason, alongside `results`. Lookup, explanation, and
+comparison are unaffected by this threshold; it applies to
+`rank_airports` only. Test required: a sub-threshold airport is absent
+from `results` and present in `excluded`.
+
 See ADR 0002, ADR 0003.
