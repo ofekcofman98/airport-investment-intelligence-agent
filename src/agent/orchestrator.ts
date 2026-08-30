@@ -17,8 +17,9 @@
  */
 
 import { anthropicTools, type ToolRefusal } from "./tools.js";
-import { dispatch, type ToolHandlers } from "./toolHandlers.js";
+import { dispatch, type ToolHandlers, type MethodologyPayload } from "./toolHandlers.js";
 import { buildSystemPrompt } from "./systemPrompt.js";
+import { formatMethodology } from "./methodologyText.js";
 import type { SessionStore, Turn } from "./session.js";
 import type { Trace, TraceEvent } from "../obs/trace.js";
 
@@ -101,9 +102,47 @@ function looksLikeYear(n: number): boolean {
   return Number.isInteger(n) && n >= 1900 && n <= 2100;
 }
 
-function extractNumbers(text: string): number[] {
-  const matches = text.match(/-?\d+(\.\d+)?/g) ?? [];
-  return matches.map(Number).filter((n) => !looksLikeYear(n));
+// Shared between claim-side and truth-side extraction so the two can never
+// drift apart (e.g. one normalizing thousands separators and the other not).
+const NUMBER_PATTERN = /-?\d+(?:\.\d+)?/g;
+
+/** A claim as stated in the narration: the numeric value plus whether it was
+ * written with a trailing `%` (matters for the fraction<->percent check
+ * below — `"5.3%"` and `"0.053"` are the same claim, `"5.3"` alone is not). */
+interface Claim {
+  value: number;
+  isPercent: boolean;
+}
+
+function extractNumbers(text: string): Claim[] {
+  // Strip thousands separators ("686,314" -> "686314") before matching, so
+  // a large count isn't misread as two smaller numbers.
+  const normalized = text.replace(/(\d),(?=\d{3}\b)/g, "$1");
+  const matches = normalized.matchAll(NUMBER_PATTERN);
+  const claims: Claim[] = [];
+  for (const m of matches) {
+    const value = Number(m[0]);
+    if (looksLikeYear(value)) continue;
+    const isPercent = normalized[m.index + m[0].length] === "%";
+    claims.push({ value, isPercent });
+  }
+  return claims;
+}
+
+/** Large-magnitude truth values (e.g. passenger counts) tolerate a relative
+ * match — ±0.5 absolute is right for a 0-100 score but unusably tight for a
+ * count in the hundreds of thousands, where an honest narration rounds
+ * ("roughly 690,000" for 686,314). Kept out of AUDIT_TOLERANCE's range so
+ * scores stay governed by the strict absolute check. */
+const RELATIVE_TOLERANCE_MIN_MAGNITUDE = 10_000;
+const RELATIVE_TOLERANCE = 0.01;
+
+function matchesTruth(claim: number, truth: number): boolean {
+  if (Math.abs(truth - claim) <= AUDIT_TOLERANCE) return true;
+  if (Math.abs(truth) >= RELATIVE_TOLERANCE_MIN_MAGNITUDE) {
+    return Math.abs(truth - claim) <= Math.abs(truth) * RELATIVE_TOLERANCE;
+  }
+  return false;
 }
 
 function extractNumbersFromResults(results: readonly unknown[]): number[] {
@@ -111,6 +150,14 @@ function extractNumbersFromResults(results: readonly unknown[]): number[] {
   const visit = (value: unknown): void => {
     if (typeof value === "number" && Number.isFinite(value)) {
       nums.push(value);
+    } else if (typeof value === "string") {
+      // Required narration content (SPEC §4a caveat, disclosed confounders)
+      // is delivered to the LLM as strings embedded in tool results — those
+      // numbers are just as much "truth" as a bare numeric field.
+      for (const m of value.matchAll(NUMBER_PATTERN)) {
+        const n = Number(m[0]);
+        if (!looksLikeYear(n)) nums.push(n);
+      }
     } else if (Array.isArray(value)) {
       value.forEach(visit);
     } else if (value !== null && typeof value === "object") {
@@ -128,7 +175,10 @@ export interface AuditResult {
 
 /**
  * Extracts every number claimed in `text` and requires each to match some
- * number appearing in this turn's tool results within AUDIT_TOLERANCE.
+ * number appearing in this turn's tool results within AUDIT_TOLERANCE (or,
+ * for large magnitudes, RELATIVE_TOLERANCE — see matchesTruth). A claim
+ * written as "N%" also passes if N/100 matches a truth value, since a tool
+ * result's fraction (0.053) is routinely narrated as a percentage (5.3%).
  * With no tool results to check against (a purely conversational turn, or
  * a refusal with no numeric content), there is nothing to audit — passes
  * trivially rather than flagging incidental numbers as mismatches.
@@ -140,9 +190,13 @@ export function auditNarration(text: string, toolResults: readonly unknown[]): A
   if (truth.length === 0) return { ok: true, mismatches: [] };
 
   const claimed = extractNumbers(text);
-  const mismatches = claimed.filter(
-    (c) => !truth.some((t) => Math.abs(t - c) <= AUDIT_TOLERANCE)
-  );
+  const mismatches = claimed
+    .filter((c) => {
+      if (truth.some((t) => matchesTruth(c.value, t))) return false;
+      if (c.isPercent && truth.some((t) => matchesTruth(c.value / 100, t))) return false;
+      return true;
+    })
+    .map((c) => c.value);
   return { ok: mismatches.length === 0, mismatches };
 }
 
@@ -210,9 +264,12 @@ export function createAgent(deps: AgentDeps): Agent {
       round++;
       deps.sessions.appendTurn(sessionId, { role: "assistant", content: response.content });
 
+      const toolUseBlocks = response.content.filter(
+        (b): b is LlmToolUseBlock => b.type === "tool_use"
+      );
+
       const resultBlocks: LlmToolResultBlock[] = [];
-      for (const block of response.content) {
-        if (block.type !== "tool_use") continue;
+      for (const block of toolUseBlocks) {
         const result = dispatch(deps.handlers, block.name, block.input);
         toolResultsThisTurn.push(result);
         deps.trace.record({ tool: block.name, args: block.input, result });
@@ -221,6 +278,21 @@ export function createAgent(deps: AgentDeps): Agent {
           tool_use_id: block.id,
           content: JSON.stringify(result),
         });
+      }
+
+      // Cost-awareness bypass (architecture.md "LLM bypass for
+      // describe_methodology"): when the model's only request this round is
+      // describe_methodology and it didn't refuse, the payload is static
+      // text already fully determined by weights.ts — skip the further LLM
+      // round-trip and return the formatted payload directly.
+      if (toolUseBlocks.length === 1 && toolUseBlocks[0]?.name === "describe_methodology") {
+        const only = toolResultsThisTurn[toolResultsThisTurn.length - 1];
+        if (only !== undefined && !("status" in (only as object))) {
+          const text = formatMethodology(only as MethodologyPayload);
+          deps.sessions.appendTurn(sessionId, { role: "user", content: resultBlocks });
+          deps.sessions.appendTurn(sessionId, { role: "assistant", content: text });
+          return { text, trace: deps.trace.events(), audited: "passed" };
+        }
       }
 
       deps.sessions.appendTurn(sessionId, { role: "user", content: resultBlocks });
@@ -238,6 +310,7 @@ export function createAgent(deps: AgentDeps): Agent {
 
     const firstText = extractText(response);
     const firstAudit = auditNarration(firstText, toolResultsThisTurn);
+    if (process.env.DEBUG_AUDIT) console.error("FIRST", JSON.stringify(firstAudit), firstText);
     if (firstAudit.ok) {
       deps.sessions.appendTurn(sessionId, { role: "assistant", content: firstText });
       return { text: firstText, trace: deps.trace.events(), audited: "passed" };
@@ -256,6 +329,7 @@ export function createAgent(deps: AgentDeps): Agent {
     const retryResponse = await callLlm(sessionId, false);
     const retryText = extractText(retryResponse);
     const retryAudit = auditNarration(retryText, toolResultsThisTurn);
+    if (process.env.DEBUG_AUDIT) console.error("RETRY", JSON.stringify(retryAudit), retryText);
 
     if (retryAudit.ok) {
       deps.sessions.appendTurn(sessionId, { role: "assistant", content: retryText });

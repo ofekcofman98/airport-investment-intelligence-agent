@@ -10,6 +10,10 @@
 - `toolHandlers.ts` is the only bridge from a tool call to
   `src/scoring/` + `src/data/`. Keeping it separate from `tools.ts` means
   swapping the LLM SDK touches `orchestrator.ts`/`tools.ts` only.
+- `resolve_airports`' free-text matching (exact code -> curated metro alias
+  table in `airportAliases.ts` -> word-boundary token match) is deliberately
+  a deterministic, hand-curated pipeline, not fuzzy/typo-tolerant matching
+  and not an LLM lookup — see ADR 0010.
 - `session.ts` owns conversation history, keyed by `sessionId` (ADR 0007).
   Nothing in `src/interface/` stores history itself.
 - `systemPrompt.ts` must state the relative-normalization caveat rule
@@ -38,10 +42,18 @@ implemented yet:
   to a templated response built directly from the tool's exact values.
   Defense-in-depth on top of the LLM/deterministic split, not a
   replacement for it.
+  The truth set includes numbers embedded in **string** result fields, not
+  just bare numeric ones — the SPEC §4a caveat and other required
+  verbatim text live there. Claim extraction normalizes thousands
+  separators, and a claim written as `"N%"` also matches a truth value of
+  `N/100`. Truth values ≥ 10,000 additionally accept a 1%-relative match
+  (a rounded passenger count), on top of the strict ±0.5 absolute used for
+  everything else. See ADR 0009 D3 and `docs/fixes/fixes.md` for why —
+  the naive version rejected every scored answer.
 - **Tool-call round limit.** Cap agentic tool-calling rounds per turn
   (`MAX_TOOL_ROUNDS = 5` in `orchestrator.ts`). If the cap is hit, make one
   final LLM call with tools disabled, forcing a synthesized answer from
   whatever data has already been gathered, instead of letting the loop
   continue. Standard cost/latency safeguard for any tool-calling agent.
 
-See ADR 0001, ADR 0002, ADR 0007, ADR 0008.
+See ADR 0001, ADR 0002, ADR 0007, ADR 0008, ADR 0010.

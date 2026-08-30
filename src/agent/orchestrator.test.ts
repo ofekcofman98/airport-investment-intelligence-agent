@@ -186,6 +186,49 @@ describe("createAgent — audit / regenerate / template", () => {
     expect(auditNarration("Anything at all, 12345.", []).ok).toBe(true);
   });
 
+  it("passes a required caveat's numbers even though they live inside a string field", () => {
+    const caveat =
+      'This score is relative to the ~400 major US airports in our dataset. ' +
+      'A score of 90 means "near the top of this set".';
+    const result = auditNarration(
+      `PWM scores 66.8. ${caveat}`,
+      [{ score: 66.8, normalization: { caveat } }]
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("matches a thousands-separated count against the unformatted truth value", () => {
+    const result = auditNarration(
+      "MHT was excluded with 686,314 passengers.",
+      [{ code: "MHT", passengers: 686314 }]
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("matches a percent-form claim against a raw fraction", () => {
+    const result = auditNarration(
+      "PWM grew 5.3% year over year.",
+      [{ paxGrowthYoy: 0.0532 }]
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("matches a rounded large count within 1% relative tolerance", () => {
+    const result = auditNarration(
+      "MHT had roughly 690,000 passengers.",
+      [{ passengers: 686314 }]
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("still fails a large-magnitude claim outside 1% relative tolerance", () => {
+    const result = auditNarration(
+      "MHT had roughly 750,000 passengers.",
+      [{ passengers: 686314 }]
+    );
+    expect(result.ok).toBe(false);
+  });
+
   it("regenerates once on a mismatch and succeeds", async () => {
     const llm = scriptedLlm([
       toolUseResponse("get_airport_metrics", { code: "SFO" }),
@@ -235,6 +278,45 @@ describe("createAgent — refusals reach the LLM as narratable content", () => {
     expect(reply.audited).toBe("passed");
     const toolResultMessage = llm.requests[1]!.messages.at(-1)!;
     expect(JSON.stringify(toolResultMessage.content)).toContain("out_of_scope_airport");
+  });
+});
+
+describe("createAgent — describe_methodology LLM bypass", () => {
+  it("returns the formatted payload directly after exactly one LLM call", async () => {
+    const llm = scriptedLlm([toolUseResponse("describe_methodology", { kpi: "congestion" })]);
+    const deps = newAgentDeps(llm);
+    const agent = createAgent(deps);
+
+    const reply = await agent.handleMessage("How do you define congestion?", "s1");
+
+    expect(reply.audited).toBe("passed");
+    expect(reply.text).toContain("del15Rate");
+    expect(reply.text).toMatch(/relative to the/i);
+    expect(llm.requests).toHaveLength(1);
+    expect(deps.trace.events()).toHaveLength(1);
+    expect(deps.trace.events()[0]!.tool).toBe("describe_methodology");
+  });
+
+  it("does not bypass when describe_methodology is called alongside another tool", async () => {
+    const llm = scriptedLlm([
+      {
+        content: [
+          { type: "tool_use", id: "call_1", name: "describe_methodology", input: {} },
+          { type: "tool_use", id: "call_2", name: "get_airport_metrics", input: { code: "SFO" } },
+        ],
+      },
+      textResponse("Congestion is defined as... and SFO handled 40000000 passengers."),
+    ]);
+    const deps = newAgentDeps(llm);
+    const agent = createAgent(deps);
+
+    const reply = await agent.handleMessage(
+      "Explain congestion and tell me SFO's passengers.",
+      "s1"
+    );
+
+    expect(reply.audited).toBe("passed");
+    expect(llm.requests.length).toBeGreaterThan(1);
   });
 });
 

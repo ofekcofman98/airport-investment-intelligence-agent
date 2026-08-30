@@ -58,6 +58,14 @@ const REFS: AirportRef[] = [
   ref({ code: "MID", name: "Mid Airport", city: "Midtown", state: "MA", region: "New England" }),
   ref({ code: "SML", name: "Small Airport", city: "Smallville", state: "VT", region: "New England" }),
   ref({ code: "ANC", name: "Anchorage Intl", city: "Anchorage", state: "AK", region: "Alaska" }),
+  ref({ code: "ATL", name: "Atlanta Hub", city: "Atlanta", state: "GA", region: "Southeast" }),
+  ref({ code: "SNA", name: "John Wayne (Santa Ana)", city: "Santa Ana", state: "CA", region: "Pacific" }),
+  ref({ code: "LAX", name: "Los Angeles Intl", city: "Los Angeles", state: "CA", region: "Pacific" }),
+  ref({ code: "JFK", name: "JFK Intl", city: "New York", state: "NY", region: "Mid-Atlantic" }),
+  ref({ code: "LGA", name: "LaGuardia", city: "New York", state: "NY", region: "Mid-Atlantic" }),
+  ref({ code: "EWR", name: "Newark Liberty Intl", city: "Newark", state: "NJ", region: "Mid-Atlantic" }),
+  ref({ code: "DCA", name: "Reagan National", city: "Washington", state: "DC", region: "Mid-Atlantic" }),
+  ref({ code: "IAD", name: "Dulles Intl", city: "Washington", state: "DC", region: "Mid-Atlantic" }),
 ];
 
 const METRICS: Record<string, AirportYearMetrics> = {
@@ -193,6 +201,47 @@ describe("resolve_airports", () => {
     expect(isRefusal(result)).toBe(false);
     expect(result.matches).toEqual([]);
     expect(result.message.length).toBeGreaterThan(0);
+  });
+
+  it("does not match a short query against an unrelated word it happens to be a mid-word substring of", () => {
+    // "la" is a raw substring of "Atlanta" (At-la-nta) but should not match
+    // it — regression for docs/fixes/answers/answer3.md.
+    const result = handlers.resolve_airports({ query: "la" }) as ResolveResult;
+    expect(result.matches.map((m) => m.code)).not.toContain("ATL");
+  });
+
+  it("resolves the curated 'LA' alias to Los Angeles", () => {
+    const result = handlers.resolve_airports({ query: "LA" }) as ResolveResult;
+    expect(result.matches.map((m) => m.code)).toEqual(["LAX"]);
+  });
+
+  it("matches a multi-word query with a trailing generic word against a multi-word city", () => {
+    // Query is longer than the city field itself — a plain substring check
+    // (field.includes(query)) can never match this.
+    const result = handlers.resolve_airports({ query: "santa ana airport" }) as ResolveResult;
+    expect(result.matches.map((m) => m.code)).toEqual(["SNA"]);
+  });
+
+  it("resolves the 'NYC' metro alias to all three New York-area airports", () => {
+    const result = handlers.resolve_airports({ query: "NYC" }) as ResolveResult;
+    expect(result.matches.map((m) => m.code).sort()).toEqual(["EWR", "JFK", "LGA"]);
+  });
+
+  it("resolves 'D.C.' (punctuation variant) to both DC-area airports", () => {
+    const result = handlers.resolve_airports({ query: "D.C." }) as ResolveResult;
+    expect(result.matches.map((m) => m.code).sort()).toEqual(["DCA", "IAD"]);
+  });
+
+  it("a metro alias short-circuits word-boundary matching (no LAS/LGA/etc. noise for 'la')", () => {
+    const result = handlers.resolve_airports({ query: "la" }) as ResolveResult;
+    expect(result.matches.map((m) => m.code)).toEqual(["LAX"]);
+  });
+
+  it("degrades an alias whose target codes are absent from the current universe to no match", () => {
+    // "bay area" -> SFO/OAK/SJC, none of which are in this test's REFS.
+    const result = handlers.resolve_airports({ query: "bay area" }) as ResolveResult;
+    expect(isRefusal(result)).toBe(false);
+    expect(result.matches).toEqual([]);
   });
 });
 

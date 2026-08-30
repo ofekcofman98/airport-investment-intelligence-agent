@@ -16,6 +16,7 @@ import type {
   AirportRef,
   AirportYearMetrics,
 } from "../data/types.js";
+import { METRO_ALIASES, normalizeQuery } from "./airportAliases.js";
 import {
   buildNormalizationContext,
   congestionScore,
@@ -230,6 +231,51 @@ function notesFor(m: AirportYearMetrics): string[] {
 }
 
 // ---------------------------------------------------------------------------
+// resolve_airports matching
+//
+// A plain `field.includes(query)` substring check has two failure modes,
+// both surfaced by real end-to-end testing (docs/fixes/answers/answer3.md):
+//   - too permissive for a short query: "la" is a substring of "Atlanta",
+//     "Dallas", "Orlando", "Charlotte" (via "Douglas"), etc. — nearly every
+//     airport in the universe, none of them Los Angeles.
+//   - too strict for a multi-word query with a trailing generic word: query
+//     "santa ana airport" is never a substring of city "Santa Ana", since
+//     the query is longer than the field.
+// Fixed by matching whole query words at word boundaries in the airport's
+// code/name/city (so "la" no longer matches mid-word), requiring every
+// non-generic query word to match rather than the query as one literal
+// substring (so a trailing "airport"/"international" doesn't break the
+// match).
+//
+// Metropolitan abbreviations ("NYC", "SF", "DC", "LA") are handled
+// separately and *before* this word-boundary matching, via the curated
+// METRO_ALIASES table (ADR 0010) — some, like "SF"/"DC", would otherwise
+// only resolve by an accidental code-prefix collision (matching "sfo"/
+// "dca"), and others, like "NYC", cannot resolve at all under word-boundary
+// matching even though the airports are in scope.
+// ---------------------------------------------------------------------------
+
+const GENERIC_QUERY_WORDS = new Set(["airport", "airports", "international", "intl", "the"]);
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function matchesQuery(ref: AirportRef, query: string): boolean {
+  const words = query.split(/\s+/).filter((w) => w.length > 0);
+  const significant = words.filter((w) => !GENERIC_QUERY_WORDS.has(w));
+  // A query made entirely of generic words ("airport") has nothing specific
+  // to match on — fall back to the raw words rather than matching everything.
+  const tokens = significant.length > 0 ? significant : words;
+
+  const haystacks = [ref.code, ref.name, ref.city].map((h) => h.toLowerCase());
+  return tokens.every((token) => {
+    const boundary = new RegExp(`\\b${escapeRegExp(token)}`, "i");
+    return haystacks.some((h) => boundary.test(h));
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Factory
 // ---------------------------------------------------------------------------
 
@@ -290,14 +336,18 @@ export function createToolHandlers(dataSource: AirportDataSource): ToolHandlers 
 
       return guarded(() => {
         const exact = refs.find((r) => r.code.toLowerCase() === query);
+        // A metro alias hit short-circuits word-boundary matching entirely
+        // (ADR 0010) — "la" must return only LAX, not LAX unioned with every
+        // ref whose name/city happens to start with "la" (LAS, LaGuardia,
+        // Lauderdale, ...). Filtered against `refs` so an alias whose target
+        // has dropped out of the universe degrades to no match rather than
+        // surfacing an out-of-scope code.
+        const alias = METRO_ALIASES[normalizeQuery(query)];
         const pool = exact
           ? [exact]
-          : refs.filter(
-              (r) =>
-                r.code.toLowerCase().includes(query) ||
-                r.name.toLowerCase().includes(query) ||
-                r.city.toLowerCase().includes(query)
-            );
+          : alias
+            ? refs.filter((r) => alias.includes(r.code))
+            : refs.filter((r) => matchesQuery(r, query));
 
         const matches: ResolveMatch[] = pool.map((r) => ({
           code: r.code,
