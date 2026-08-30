@@ -29,6 +29,13 @@ interface layer surfaced two decisions not covered by that ADR or
    to match `extractNumbersFromResults()`'s truth set, none of which
    `src/agent/CLAUDE.md`'s "KPI audit layer" bullet or any ADR specifies.
    Full diagnosis in `docs/fixes/fixes.md`.
+4. **Audit number-parsing false positives.** A later 3-way `compare_airports`
+   narration templated despite stating correct values: a hyphenated range
+   ("~25-29") was misread as a negative number ("-29"), and a bare "100"
+   from "0-100 scale" language was flagged as an unmatched claim. Fixed with
+   a negative lookbehind on the number regex and a scale-bound (0/100)
+   exemption alongside the existing year exemption. Full diagnosis in
+   `docs/fixes/fixes.md`.
 
 ## Decision
 - Add `src/interface/composition.ts`: the one file that imports across

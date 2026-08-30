@@ -102,9 +102,22 @@ function looksLikeYear(n: number): boolean {
   return Number.isInteger(n) && n >= 1900 && n <= 2100;
 }
 
+/** Every normalized score/confidence value in this system is fixed to the
+ * 0-100 (or 0-1) scale by construction (src/scoring/), so a bare 0 or 100 in
+ * narration is routinely scale language ("a 0-100 scale", "confidence of
+ * 1.0" narrated as "100%") rather than a specific claimed figure — exempted
+ * the same way looksLikeYear exempts a stated analysis year. */
+function looksLikeScaleBound(n: number): boolean {
+  return n === 0 || n === 100;
+}
+
 // Shared between claim-side and truth-side extraction so the two can never
 // drift apart (e.g. one normalizing thousands separators and the other not).
-const NUMBER_PATTERN = /-?\d+(?:\.\d+)?/g;
+// The negative lookbehind keeps a hyphenated range ("25-29") from being
+// misread as "25" followed by the negative number "-29" — a real narration
+// bug hit in practice (docs/fixes/fixes.md) since a genuine negative number
+// is never written glued to a preceding digit with no separator.
+const NUMBER_PATTERN = /(?<!\d)-?\d+(?:\.\d+)?/g;
 
 /** A claim as stated in the narration: the numeric value plus whether it was
  * written with a trailing `%` (matters for the fraction<->percent check
@@ -122,7 +135,7 @@ function extractNumbers(text: string): Claim[] {
   const claims: Claim[] = [];
   for (const m of matches) {
     const value = Number(m[0]);
-    if (looksLikeYear(value)) continue;
+    if (looksLikeYear(value) || looksLikeScaleBound(value)) continue;
     const isPercent = normalized[m.index + m[0].length] === "%";
     claims.push({ value, isPercent });
   }
@@ -310,7 +323,6 @@ export function createAgent(deps: AgentDeps): Agent {
 
     const firstText = extractText(response);
     const firstAudit = auditNarration(firstText, toolResultsThisTurn);
-    if (process.env.DEBUG_AUDIT) console.error("FIRST", JSON.stringify(firstAudit), firstText);
     if (firstAudit.ok) {
       deps.sessions.appendTurn(sessionId, { role: "assistant", content: firstText });
       return { text: firstText, trace: deps.trace.events(), audited: "passed" };
@@ -329,7 +341,6 @@ export function createAgent(deps: AgentDeps): Agent {
     const retryResponse = await callLlm(sessionId, false);
     const retryText = extractText(retryResponse);
     const retryAudit = auditNarration(retryText, toolResultsThisTurn);
-    if (process.env.DEBUG_AUDIT) console.error("RETRY", JSON.stringify(retryAudit), retryText);
 
     if (retryAudit.ok) {
       deps.sessions.appendTurn(sessionId, { role: "assistant", content: retryText });

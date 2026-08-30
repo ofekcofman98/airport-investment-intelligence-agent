@@ -50,6 +50,12 @@ implemented yet:
   (a rounded passenger count), on top of the strict ±0.5 absolute used for
   everything else. See ADR 0009 D3 and `docs/fixes/fixes.md` for why —
   the naive version rejected every scored answer.
+  A bare `0` or `100` in narration is exempted as scale language (every
+  normalized score/confidence is fixed to that range by construction), and
+  the number regex requires a non-digit before a `-` so a hyphenated range
+  like "25-29" isn't misread as "25" then the negative number "-29" — both
+  hit in practice narrating a 3-way `compare_airports` result, see
+  `docs/fixes/fixes.md`.
 - **Tool-call round limit.** Cap agentic tool-calling rounds per turn
   (`MAX_TOOL_ROUNDS = 5` in `orchestrator.ts`). If the cap is hit, make one
   final LLM call with tools disabled, forcing a synthesized answer from

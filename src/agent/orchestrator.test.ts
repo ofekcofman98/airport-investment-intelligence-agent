@@ -229,6 +229,32 @@ describe("createAgent — audit / regenerate / template", () => {
     expect(result.ok).toBe(false);
   });
 
+  it("does not misread a hyphenated range as a negative number", () => {
+    // Regression: "~25-29" for load factor (DCA 29.4, BWI 25.0) was
+    // previously parsed as "25" then the negative number "-29", which
+    // matches nothing in the truth set. docs/fixes/fixes.md.
+    const result = auditNarration(
+      "DCA and BWI both run lower (~25-29).",
+      [{ dca: 29.4 }, { bwi: 25.0 }]
+    );
+    expect(result.ok).toBe(true);
+  });
+
+  it("still catches a genuine negative-number mismatch (not glued to a preceding digit)", () => {
+    // truth is 0.6 (60%), not 0.03, so this isn't just the existing
+    // percent<->fraction check finding an incidental match.
+    const result = auditNarration("Growth was -12.0% year over year.", [{ paxGrowthYoy: 0.6 }]);
+    expect(result.ok).toBe(false);
+  });
+
+  it("treats a bare 0 or 100 as scale language, not a claimed figure", () => {
+    const result = auditNarration(
+      "Scores run on a 0-100 scale; DCA is 62.1.",
+      [{ score: 62.1 }]
+    );
+    expect(result.ok).toBe(true);
+  });
+
   it("regenerates once on a mismatch and succeeds", async () => {
     const llm = scriptedLlm([
       toolUseResponse("get_airport_metrics", { code: "SFO" }),

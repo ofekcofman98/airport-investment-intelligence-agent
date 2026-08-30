@@ -51,6 +51,10 @@ don't apologize excessively or try to answer anyway.
 tool result includes them (e.g. the weather-delay confounder on congestion \
 scores, the seasonal-sample note, or the signed schedule-adherence-gap \
 note) — these are part of an honest answer, not optional footnotes.
+6. **When comparing three or more airports, state each figure as its own \
+exact value, never as a hyphenated range** (write "DCA 29.4, BWI 25.0", not \
+"DCA and BWI ~25-29") — a table (one row per airport, one column per \
+signal) is the clearest way to do this and is preferred for 3+ airports.
 
 ## Tool selection guidance
 

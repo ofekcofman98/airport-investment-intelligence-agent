@@ -94,3 +94,40 @@ was explicitly declined — see ADR 0010 for the reasoning.
 **Verification:** `npm run typecheck`, `npm test` (new
 `airportAliases.test.ts` plus extended `toolHandlers.test.ts` cases), then
 `npm run cli` for "NYC", "DC", and the original LA/Santa Ana question.
+
+## 2026-08-30 — 3-way compare_airports narration templated on a correct answer
+
+**Symptom.** "Compare congestion at DC airports" (DCA/IAD/BWI) intermittently
+templated. Reproduced with temporary debug logging of `auditNarration`'s
+input/output around both the first attempt and the regeneration in
+`orchestrator.ts`.
+
+**Root cause — two audit regex bugs, not a model error; both narration
+attempts stated correct values:**
+1. The model wrote `"~25-29"` for load factor (DCA 29.4, BWI 25.0, both
+   normalized). `NUMBER_PATTERN`'s optional leading `-` matched the hyphen in
+   `"25-29"` as a negative sign, parsing the second number as `-29` — which
+   matches nothing in the truth set (truth has `29.4` and `25.0`, no negative
+   values). A genuine negative number is never written glued to a preceding
+   digit with no separator, so this was always a false positive waiting to
+   happen on any hyphenated range.
+2. The regenerated attempt also got flagged on a bare `100` from
+   `"0–100 scale"` — describing the fixed bounds every normalized score/
+   confidence value has by construction, not a claimed figure.
+
+**Fix** (`src/agent/orchestrator.ts`):
+- `NUMBER_PATTERN` gained a negative lookbehind (`(?<!\d)-?\d+...`) so a `-`
+  immediately preceded by a digit is read as a range separator, not a sign.
+- A bare `0` or `100` is now exempted from claim extraction the same way a
+  stated year already was (`looksLikeScaleBound`, alongside `looksLikeYear`).
+- `systemPrompt.ts` also gained a hard constraint (#6): for 3+ airport
+  comparisons, state each figure as its own exact value (prefer a table)
+  rather than a hyphenated range — defense-in-depth on top of the regex fix,
+  since a vague range is inherently harder for any regex-based audit to
+  parse correctly.
+
+**Verification:** `npm run typecheck`, `npm test` (3 new
+`orchestrator.test.ts` cases: the exact hyphenated-range regression, a
+genuine negative number still catches a real mismatch, and the 0/100
+scale-bound exemption), then re-ran "Compare congestion at DC airports"
+repeatedly via `npm run cli` with no further template fallback.
