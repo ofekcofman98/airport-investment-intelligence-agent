@@ -7,8 +7,6 @@ import type {
 } from "../../data/types.js";
 import {
   createToolHandlers,
-  HIGH_SEASONALITY_CODES,
-  NEGATIVE_GAP_NOTE,
   type MetricsResult,
   type ExplainPayload,
   type RankPayload,
@@ -16,6 +14,7 @@ import {
   type MethodologyPayload,
   type ResolveResult,
 } from "../toolHandlers/toolHandlers.js";
+import { HIGH_SEASONALITY_CODES, NEGATIVE_GAP_NOTE } from "../toolHandlers/disclosedNotes.js";
 import type { ToolRefusal } from "../tools/tools.js";
 
 function ref(overrides: Partial<AirportRef>): AirportRef {

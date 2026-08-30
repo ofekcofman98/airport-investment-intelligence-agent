@@ -10,6 +10,13 @@
 - `toolHandlers.ts` is the only bridge from a tool call to
   `src/scoring/` + `src/data/`. Keeping it separate from `tools.ts` means
   swapping the LLM SDK touches `orchestrator.ts`/`tools.ts` only.
+  `toolHandlers.ts` itself is now a thin factory/dispatcher: each tool's
+  logic lives in its own `handlers/*.ts` file, closing over a shared
+  `HandlerContext` (`handlerContext.ts`) built once per data source. Payload
+  types live in `payloads.ts`, disclosed-note text (SPEC §2-4) in
+  `disclosedNotes.ts`, tool-boundary rounding in `roundResult.ts`, and
+  `resolve_airports`' word-boundary/alias matching in
+  `resolveAirportsMatch.ts`.
 - `resolve_airports`' free-text matching (exact code -> curated metro alias
   table in `airportAliases.ts` -> word-boundary token match) is deliberately
   a deterministic, hand-curated pipeline, not fuzzy/typo-tolerant matching
@@ -18,6 +25,12 @@
   Nothing in `src/interface/` stores history itself.
 - `systemPrompt.ts` must state the relative-normalization caveat rule
   (SPEC §4a) and the refusal cases (SPEC §5) as hard constraints.
+- `llmClient.ts` defines the minimal LLM wire shape locally so
+  `orchestrator.ts`'s loop has no SDK dependency; the real SDK adapter lives
+  in `src/interface/anthropicClient.ts`.
+- `narrationAudit.ts` owns the output-consistency check (the "KPI audit
+  layer" described below) as pure functions; `orchestrator.ts` calls it,
+  never reimplements it.
 
 ## Error handling
 
@@ -30,10 +43,11 @@ result reaching the orchestrator is either a valid payload or a structured
 
 ## Required follow-ups (implement when this layer starts)
 
-Recorded now so they aren't skipped once `orchestrator.ts` exists — not
-implemented yet:
+Recorded now so they aren't skipped once `orchestrator.ts` exists — both
+implemented:
 
-- **KPI audit layer (output-consistency check).** A different failure mode
+- **KPI audit layer (output-consistency check)**, implemented in
+  `narrationAudit.ts`. A different failure mode
   than "the LLM computes a number" (already prevented by ADR 0002): the LLM
   could misquote or mis-round a value that a tool call already returned
   correctly. Before finalizing a turn, cross-check every numeric claim in
@@ -56,7 +70,7 @@ implemented yet:
   like "25-29" isn't misread as "25" then the negative number "-29" — both
   hit in practice narrating a 3-way `compare_airports` result, see
   `docs/fixes/fixes.md`.
-- **Tool-call round limit.** Cap agentic tool-calling rounds per turn
+- **Tool-call round limit**, implemented in `orchestrator.ts`. Cap agentic tool-calling rounds per turn
   (`MAX_TOOL_ROUNDS = 5` in `orchestrator.ts`). If the cap is hit, make one
   final LLM call with tools disabled, forcing a synthesized answer from
   whatever data has already been gathered, instead of letting the loop

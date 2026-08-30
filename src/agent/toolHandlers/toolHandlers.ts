@@ -1,22 +1,22 @@
 /**
- * src/agent/toolHandlers.ts — the only bridge from a tool call to
- * src/scoring/ + src/data/ (src/agent/CLAUDE.md). Every handler returns
+ * src/agent/toolHandlers/toolHandlers.ts — the only bridge from a tool call
+ * to src/scoring/ + src/data/ (src/agent/CLAUDE.md). Every handler returns
  * either a valid payload or a structured ToolRefusal — never a raw
  * exception or stack trace reaches the LLM.
  *
  * Does NOT record trace events — that is orchestrator.ts's job
  * (src/obs/CLAUDE.md: "orchestrator.ts appends a TraceEvent on every tool
  * call/return"). This file has no dependency on src/obs/.
+ *
+ * This file itself only builds the shared HandlerContext (handlerContext.ts)
+ * once per data source and wires it into each handlers/*.ts factory; the
+ * actual per-tool logic lives in handlers/, disclosed-note text in
+ * disclosedNotes.ts, payload/interface shapes in payloads.ts, rounding in
+ * roundResult.ts, and resolve_airports' matching heuristics in
+ * resolveAirportsMatch.ts.
  */
 
-import type { z } from "zod";
-import type {
-  AirportCode,
-  AirportDataSource,
-  AirportRef,
-  AirportYearMetrics,
-} from "../../data/types.js";
-import { METRO_ALIASES, normalizeQuery } from "../airportAliases/airportAliases.js";
+import type { AirportDataSource, AirportYearMetrics } from "../../data/types.js";
 import {
   buildNormalizationContext,
   congestionScore,
@@ -24,260 +24,61 @@ import {
   spareCapacityScore,
   unmetDemandScore,
 } from "../../scoring/proxyScores.js";
-import { rankAirports, compareAirports, type RankResult, type CompareResult } from "../../scoring/rankCompare.js";
-import { effectiveRawWeights } from "../../scoring/effectiveWeights.js";
 import {
   CONGESTION_WEIGHTS,
   UNMET_DEMAND_WEIGHTS,
   EXPANSION_WEIGHTS,
-  WEIGHTS_VERSION,
-  MIN_ANNUAL_PASSENGERS,
-  normalizationCaveat,
 } from "../../scoring/weights.js";
 import type { NormalizationContext, ProxyKpi, ScoreResult } from "../../scoring/types.js";
-import {
-  TOOLS,
-  refusal,
-  type ToolRefusal,
-  type ToolName,
-} from "../tools/tools.js";
+import { refusal, type ToolRefusal, type ToolName } from "../tools/tools.js";
+import type { HandlerContext } from "./handlerContext.js";
+import type { ToolHandlers } from "./payloads.js";
+import { resolveAirports } from "./handlers/resolveAirports.js";
+import { getAirportMetrics } from "./handlers/getAirportMetrics.js";
+import { rankAirports } from "./handlers/rankAirports.js";
+import { compareAirports } from "./handlers/compareAirports.js";
+import { explainScore } from "./handlers/explainScore.js";
+import { describeMethodology } from "./handlers/describeMethodology.js";
 
-// ---------------------------------------------------------------------------
-// Disclosed notes (SPEC §2, §3, §4) — attached to the payloads that carry
-// the facts they describe, per decision 5 (root CLAUDE.md "Independent
-// decisions"): systemPrompt.ts states the rule that these must be
-// surfaced; the note text itself lives here, next to the data it's about.
-// ---------------------------------------------------------------------------
+export type { HandlerContext } from "./handlerContext.js";
+export type {
+  ResolveMatch,
+  ResolveResult,
+  MetricsResult,
+  RankPayload,
+  ComparePayload,
+  ExplainPayload,
+  MethodologyEntry,
+  MethodologyPayload,
+  ToolHandlers,
+} from "./payloads.js";
 
-/** SPEC §2 — del15Rate/avgTaxiOutMin/nasDelayPerDeparture/cancellationRate
- * are estimated from a single representative month, not measured year-round. */
-export const SAMPLE_MONTH_NOTE =
-  "Delay and cancellation figures (del15_rate, avg_taxi_out_min, " +
-  "nas_delay_per_departure, cancellation_rate) are estimated from a single " +
-  "representative month — March 2025 — not measured across the full year.";
-
-/** SPEC §4 — NAS_DELAY is the best available volume signal, but delay
- * minutes also reflect weather, carrier ops, and upstream late aircraft. */
-export const WEATHER_CONFOUNDER_NOTE =
-  "Delay minutes also reflect weather, carrier operations, and upstream " +
-  "late aircraft, not congestion alone; weather_delay_per_departure is " +
-  "reported alongside this score so an analyst can discount weather-driven " +
-  "airports.";
-
-/** SPEC §3 — a negative schedule_adherence_gap is a known T-100 quirk
- * (non-scheduled/charter operations counted as performed), not a data error. */
-export const NEGATIVE_GAP_NOTE =
-  "This airport's schedule_adherence_gap is negative: departures_performed " +
-  "exceeded departures_scheduled, likely due to non-scheduled (charter, " +
-  "extra-section) operations BTS counts as performed. This is not a data " +
-  "error and can indicate an airport adding capacity beyond its published " +
-  "schedule, rather than under-delivering on it.";
-
-/**
- * Hand-authored, not derived: the snapshot has only a single-month On-Time
- * sample (see SAMPLE_MONTH_NOTE), so there is no data-driven seasonality
- * measure to test against. This list flags airports with well-known strong
- * seasonal/weather traffic variation for extra emphasis on top of the
- * universal SAMPLE_MONTH_NOTE. If the snapshot ever gains multi-month
- * On-Time data, replace this with a computed measure instead of extending
- * it by hand.
- */
-export const HIGH_SEASONALITY_CODES: ReadonlySet<AirportCode> = new Set([
-  "ANC", // SPEC §2 named example: strong seasonal/weather traffic variation
-  "HNL",
-  "BTV",
-  "PWM",
-]);
-
-export function highSeasonalityNote(code: AirportCode): string {
-  return (
-    `${code} has strong seasonal traffic variation; a one-month sample is ` +
-    `a weaker proxy for its typical congestion/delay levels than for a ` +
-    `less seasonal airport.`
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Rounding at the tool boundary (decision 3): structure unchanged, so the
-// planned KPI audit layer compares narration against the same precision
-// the LLM was shown.
-// ---------------------------------------------------------------------------
-
-function round(value: number, decimals: number): number {
-  const factor = 10 ** decimals;
-  return Math.round(value * factor) / factor;
-}
-
-function roundScoreResult(result: ScoreResult): ScoreResult {
-  return {
-    ...result,
-    score: round(result.score, 1),
-    confidence: round(result.confidence, 2),
-    breakdown: result.breakdown.map((entry) => ({
-      ...entry,
-      normalized: round(entry.normalized, 1),
-      contribution: round(entry.contribution, 1),
-    })),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Payload shapes returned by each handler
-// ---------------------------------------------------------------------------
-
-export interface ResolveMatch {
-  code: AirportCode;
-  name: string;
-  city: string;
-  state: string;
-}
-
-export interface ResolveResult {
-  matches: ResolveMatch[];
-  message: string;
-}
-
-export interface MetricsResult {
-  ref: AirportRef;
-  metrics: AirportYearMetrics;
-  notes: string[];
-}
-
-export interface RankPayload extends RankResult {}
-
-export interface ComparePayload extends CompareResult {}
-
-export interface ExplainPayload {
-  result: ScoreResult;
-  weights: Record<string, number>;
-  effectiveWeights: Record<string, number>;
-  confounderNote: string;
-  notes: string[];
-}
-
-export interface MethodologyEntry {
-  kpi: ProxyKpi;
-  weights: Record<string, number>;
-}
-
-export interface MethodologyPayload {
-  weightsVersion: string;
-  minAnnualPassengers: number;
-  caveat: string;
-  entries: MethodologyEntry[];
-  effectiveWeights: Record<string, number>;
-}
-
-export interface ToolHandlers {
-  resolve_airports(args: unknown): ResolveResult | ToolRefusal;
-  get_airport_metrics(args: unknown): MetricsResult | ToolRefusal;
-  rank_airports(args: unknown): RankPayload | ToolRefusal;
-  compare_airports(args: unknown): ComparePayload | ToolRefusal;
-  explain_score(args: unknown): ExplainPayload | ToolRefusal;
-  describe_methodology(args: unknown): MethodologyPayload | ToolRefusal;
-}
-
-// ---------------------------------------------------------------------------
-// Shared helpers
-// ---------------------------------------------------------------------------
-
-function toolSchema(name: ToolName): z.ZodTypeAny {
-  const tool = TOOLS.find((t) => t.name === name);
-  if (!tool) throw new Error(`toolHandlers: no schema registered for "${name}"`);
-  return tool.schema;
-}
-
-/** Parses `args` against the named tool's Zod schema, returning either the
- * parsed value or an `invalid_arguments` refusal — never throws. */
-function parseArgs<T>(name: ToolName, args: unknown): { ok: true; value: T } | { ok: false; refusal: ToolRefusal } {
-  const result = toolSchema(name).safeParse(args);
-  if (!result.success) {
-    return {
-      ok: false,
-      refusal: refusal(
-        "invalid_arguments",
-        `Arguments for "${name}" failed validation: ${result.error.issues.map((i) => i.message).join("; ")}`,
-        { issues: result.error.issues }
-      ),
-    };
-  }
-  return { ok: true, value: result.data as T };
-}
-
-/** Wraps a handler body so any unexpected throw from data/scoring becomes a
- * structured refusal — the message text only, never a stack trace. */
-function guarded<T>(fn: () => T | ToolRefusal): T | ToolRefusal {
-  try {
-    return fn();
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return refusal("no_data", "An unexpected error occurred while computing this result.", {
-      error: message,
-    });
+function scoreForKpi(kpi: ProxyKpi, m: AirportYearMetrics, ctx: NormalizationContext): ScoreResult {
+  switch (kpi) {
+    case "congestion":
+      return congestionScore(m, ctx);
+    case "unmet_demand":
+      return unmetDemandScore(m, ctx);
+    case "expansion_opportunity":
+      return expansionOpportunityScore(m, ctx);
+    case "spare_capacity":
+      return spareCapacityScore(m, ctx);
   }
 }
 
-function weatherNoteFor(m: AirportYearMetrics): string {
-  return m.weatherDelayPerDeparture === null
-    ? WEATHER_CONFOUNDER_NOTE + " (No weather-delay figure is available for this airport.)"
-    : `${WEATHER_CONFOUNDER_NOTE} This airport's weather_delay_per_departure is ${m.weatherDelayPerDeparture} minutes.`;
+function weightsForKpi(kpi: ProxyKpi): Record<string, number> {
+  switch (kpi) {
+    case "congestion":
+      return CONGESTION_WEIGHTS;
+    case "unmet_demand":
+      return UNMET_DEMAND_WEIGHTS;
+    case "expansion_opportunity":
+      return EXPANSION_WEIGHTS;
+    case "spare_capacity":
+      // Spare Capacity has no weights of its own — it is 100 - congestion.
+      return CONGESTION_WEIGHTS;
+  }
 }
-
-function notesFor(m: AirportYearMetrics): string[] {
-  const notes = [SAMPLE_MONTH_NOTE];
-  if (m.scheduleAdherenceGap < 0) notes.push(NEGATIVE_GAP_NOTE);
-  if (HIGH_SEASONALITY_CODES.has(m.code)) notes.push(highSeasonalityNote(m.code));
-  return notes;
-}
-
-// ---------------------------------------------------------------------------
-// resolve_airports matching
-//
-// A plain `field.includes(query)` substring check has two failure modes,
-// both surfaced by real end-to-end testing (docs/fixes/answers/answer3.md):
-//   - too permissive for a short query: "la" is a substring of "Atlanta",
-//     "Dallas", "Orlando", "Charlotte" (via "Douglas"), etc. — nearly every
-//     airport in the universe, none of them Los Angeles.
-//   - too strict for a multi-word query with a trailing generic word: query
-//     "santa ana airport" is never a substring of city "Santa Ana", since
-//     the query is longer than the field.
-// Fixed by matching whole query words at word boundaries in the airport's
-// code/name/city (so "la" no longer matches mid-word), requiring every
-// non-generic query word to match rather than the query as one literal
-// substring (so a trailing "airport"/"international" doesn't break the
-// match).
-//
-// Metropolitan abbreviations ("NYC", "SF", "DC", "LA") are handled
-// separately and *before* this word-boundary matching, via the curated
-// METRO_ALIASES table (ADR 0010) — some, like "SF"/"DC", would otherwise
-// only resolve by an accidental code-prefix collision (matching "sfo"/
-// "dca"), and others, like "NYC", cannot resolve at all under word-boundary
-// matching even though the airports are in scope.
-// ---------------------------------------------------------------------------
-
-const GENERIC_QUERY_WORDS = new Set(["airport", "airports", "international", "intl", "the"]);
-
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function matchesQuery(ref: AirportRef, query: string): boolean {
-  const words = query.split(/\s+/).filter((w) => w.length > 0);
-  const significant = words.filter((w) => !GENERIC_QUERY_WORDS.has(w));
-  // A query made entirely of generic words ("airport") has nothing specific
-  // to match on — fall back to the raw words rather than matching everything.
-  const tokens = significant.length > 0 ? significant : words;
-
-  const haystacks = [ref.code, ref.name, ref.city].map((h) => h.toLowerCase());
-  return tokens.every((token) => {
-    const boundary = new RegExp(`\\b${escapeRegExp(token)}`, "i");
-    return haystacks.some((h) => boundary.test(h));
-  });
-}
-
-// ---------------------------------------------------------------------------
-// Factory
-// ---------------------------------------------------------------------------
 
 /**
  * Builds the six tool handlers over one AirportDataSource. Never imports
@@ -299,217 +100,26 @@ export function createToolHandlers(dataSource: AirportDataSource): ToolHandlers 
     if (metrics) universe.push(metrics);
   }
   const universeByCode = new Map(universe.map((m) => [m.code, m]));
-  const ctx: NormalizationContext = buildNormalizationContext(universe);
+  const normalizationCtx: NormalizationContext = buildNormalizationContext(universe);
 
-  function scoreFor(kpi: ProxyKpi, m: AirportYearMetrics): ScoreResult {
-    switch (kpi) {
-      case "congestion":
-        return congestionScore(m, ctx);
-      case "unmet_demand":
-        return unmetDemandScore(m, ctx);
-      case "expansion_opportunity":
-        return expansionOpportunityScore(m, ctx);
-      case "spare_capacity":
-        return spareCapacityScore(m, ctx);
-    }
-  }
-
-  function weightsFor(kpi: ProxyKpi): Record<string, number> {
-    switch (kpi) {
-      case "congestion":
-        return CONGESTION_WEIGHTS;
-      case "unmet_demand":
-        return UNMET_DEMAND_WEIGHTS;
-      case "expansion_opportunity":
-        return EXPANSION_WEIGHTS;
-      case "spare_capacity":
-        // Spare Capacity has no weights of its own — it is 100 - congestion.
-        return CONGESTION_WEIGHTS;
-    }
-  }
+  const ctx: HandlerContext = {
+    dataSource,
+    manifest,
+    refs,
+    universe,
+    universeByCode,
+    ctx: normalizationCtx,
+    scoreFor: (kpi, m) => scoreForKpi(kpi, m, normalizationCtx),
+    weightsFor: weightsForKpi,
+  };
 
   return {
-    resolve_airports(args) {
-      const parsed = parseArgs<{ query: string }>("resolve_airports", args);
-      if (!parsed.ok) return parsed.refusal;
-      const query = parsed.value.query.trim().toLowerCase();
-
-      return guarded(() => {
-        const exact = refs.find((r) => r.code.toLowerCase() === query);
-        // A metro alias hit short-circuits word-boundary matching entirely
-        // (ADR 0010) — "la" must return only LAX, not LAX unioned with every
-        // ref whose name/city happens to start with "la" (LAS, LaGuardia,
-        // Lauderdale, ...). Filtered against `refs` so an alias whose target
-        // has dropped out of the universe degrades to no match rather than
-        // surfacing an out-of-scope code.
-        const alias = METRO_ALIASES[normalizeQuery(query)];
-        const pool = exact
-          ? [exact]
-          : alias
-            ? refs.filter((r) => alias.includes(r.code))
-            : refs.filter((r) => matchesQuery(r, query));
-
-        const matches: ResolveMatch[] = pool.map((r) => ({
-          code: r.code,
-          name: r.name,
-          city: r.city,
-          state: r.state,
-        }));
-
-        return {
-          matches,
-          message:
-            matches.length > 0
-              ? `Found ${matches.length} match(es) in the in-scope universe.`
-              : `No airport matching "${parsed.value.query}" was found in the in-scope universe.`,
-        };
-      });
-    },
-
-    get_airport_metrics(args) {
-      const parsed = parseArgs<{ code: string; year?: number }>("get_airport_metrics", args);
-      if (!parsed.ok) return parsed.refusal;
-      const { code, year } = parsed.value;
-
-      return guarded(() => {
-        const ref = dataSource.getAirportRef(code);
-        if (!ref) {
-          return refusal(
-            "out_of_scope_airport",
-            `"${code}" is not in the in-scope ~${refs.length}-airport universe.`,
-            { code }
-          );
-        }
-
-        if (year !== undefined && year !== manifest.analysisYear) {
-          return refusal(
-            "unsupported_year",
-            `Only ${manifest.analysisYear} is independently queryable; ${manifest.priorYear} ` +
-              `is loaded solely to compute pax_growth_yoy.`,
-            { requestedYear: year, queryableYear: manifest.analysisYear }
-          );
-        }
-
-        const metrics = dataSource.getYearMetrics(code, manifest.analysisYear);
-        if (!metrics) {
-          return refusal(
-            "no_data",
-            `No ${manifest.analysisYear} metrics are available for "${code}".`,
-            { code }
-          );
-        }
-
-        return { ref, metrics, notes: notesFor(metrics) };
-      });
-    },
-
-    rank_airports(args) {
-      const parsed = parseArgs<{
-        kpi: ProxyKpi;
-        filter?: { region?: string; state?: string; codes?: string[] };
-        n?: number;
-      }>("rank_airports", args);
-      if (!parsed.ok) return parsed.refusal;
-      const { kpi, filter, n } = parsed.value;
-
-      return guarded(() => {
-        const result = rankAirports(universe, { kpi, filter: filter as never, n }, refs);
-        return {
-          ...result,
-          results: result.results.map((entry) => ({
-            ...entry,
-            result: roundScoreResult(entry.result),
-          })),
-        };
-      });
-    },
-
-    compare_airports(args) {
-      const parsed = parseArgs<{ codes: string[]; kpi: ProxyKpi }>("compare_airports", args);
-      if (!parsed.ok) return parsed.refusal;
-      const { codes, kpi } = parsed.value;
-
-      return guarded(() => {
-        const badCodes = codes.filter((c) => !dataSource.getAirportRef(c));
-        if (badCodes.length > 0) {
-          return refusal(
-            "out_of_scope_airport",
-            `The following codes are not in the in-scope universe: ${badCodes.join(", ")}.`,
-            { codes: badCodes }
-          );
-        }
-        const result = compareAirports(universe, codes, kpi);
-        return {
-          ...result,
-          comparisons: result.comparisons.map(roundScoreResult),
-          driverDeltas: result.driverDeltas.map((d) => ({
-            ...d,
-            values: Object.fromEntries(
-              Object.entries(d.values).map(([code, v]) => [code, round(v, 1)])
-            ),
-            maxDelta: round(d.maxDelta, 1),
-          })),
-        };
-      });
-    },
-
-    explain_score(args) {
-      const parsed = parseArgs<{ code: string; kpi: ProxyKpi }>("explain_score", args);
-      if (!parsed.ok) return parsed.refusal;
-      const { code, kpi } = parsed.value;
-
-      return guarded(() => {
-        const ref = dataSource.getAirportRef(code);
-        if (!ref) {
-          return refusal(
-            "out_of_scope_airport",
-            `"${code}" is not in the in-scope ~${refs.length}-airport universe.`,
-            { code }
-          );
-        }
-        const m = universeByCode.get(code);
-        if (!m) {
-          return refusal(
-            "no_data",
-            `No ${manifest.analysisYear} metrics are available for "${code}", so it cannot be scored.`,
-            { code }
-          );
-        }
-
-        const result = roundScoreResult(scoreFor(kpi, m));
-
-        return {
-          result,
-          weights: weightsFor(kpi),
-          effectiveWeights: effectiveRawWeights(),
-          confounderNote: weatherNoteFor(m),
-          notes: notesFor(m),
-        };
-      });
-    },
-
-    describe_methodology(args) {
-      const parsed = parseArgs<{ kpi?: ProxyKpi }>("describe_methodology", args);
-      if (!parsed.ok) return parsed.refusal;
-      const { kpi } = parsed.value;
-
-      // Pure documentation: touches no data source, per plan decision.
-      const allKpis: ProxyKpi[] = [
-        "congestion",
-        "unmet_demand",
-        "expansion_opportunity",
-        "spare_capacity",
-      ];
-      const kpisToDescribe = kpi ? [kpi] : allKpis;
-
-      return {
-        weightsVersion: WEIGHTS_VERSION,
-        minAnnualPassengers: MIN_ANNUAL_PASSENGERS,
-        caveat: normalizationCaveat(refs.length),
-        entries: kpisToDescribe.map((k) => ({ kpi: k, weights: weightsFor(k) })),
-        effectiveWeights: effectiveRawWeights(),
-      };
-    },
+    resolve_airports: resolveAirports(ctx),
+    get_airport_metrics: getAirportMetrics(ctx),
+    rank_airports: rankAirports(ctx),
+    compare_airports: compareAirports(ctx),
+    explain_score: explainScore(ctx),
+    describe_methodology: describeMethodology(ctx),
   };
 }
 

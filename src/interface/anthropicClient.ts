@@ -23,7 +23,7 @@ import type {
   LlmAssistantBlock,
   LlmMessage,
   LlmMessageContent,
-} from "../agent/orchestrator/orchestrator.js";
+} from "../agent/llmClient/llmClient.js";
 
 // D3 (plan "Independent decisions"): model id and token cap are
 // interface-layer constants — no ADR governs the specific model choice.
