@@ -9,7 +9,7 @@
  * ADR 0010 for why each entry exists.
  */
 
-import type { AirportCode } from "../data/types.js";
+import type { AirportCode } from "../../data/types.js";
 
 /** Lowercase, collapse whitespace, and strip periods so punctuation variants
  * ("D.C.", "  dc ", "DC") all key the same alias entry. */

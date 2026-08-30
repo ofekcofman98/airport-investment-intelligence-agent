@@ -10,9 +10,9 @@
  * composition.ts exactly like cli.ts is — never a fork of the agent core.
  */
 
-import type { Agent } from "../agent/orchestrator.js";
+import type { Agent } from "../agent/orchestrator/orchestrator.js";
 import type { Trace } from "../obs/trace.js";
-import type { SessionStore } from "../agent/session.js";
+import type { SessionStore } from "../agent/session/session.js";
 
 export interface ChannelDeps {
   agent: Agent;

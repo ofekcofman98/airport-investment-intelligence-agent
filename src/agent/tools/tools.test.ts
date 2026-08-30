@@ -8,7 +8,7 @@ import {
   anthropicTools,
   refusal,
   type ToolName,
-} from "./tools.js";
+} from "../tools/tools.js";
 
 const EXPECTED_TOOL_NAMES: ToolName[] = [
   "resolve_airports",

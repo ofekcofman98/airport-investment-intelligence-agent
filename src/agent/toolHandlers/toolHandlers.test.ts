@@ -4,7 +4,7 @@ import type {
   AirportRef,
   AirportYearMetrics,
   SnapshotManifest,
-} from "../data/types.js";
+} from "../../data/types.js";
 import {
   createToolHandlers,
   HIGH_SEASONALITY_CODES,
@@ -15,8 +15,8 @@ import {
   type ComparePayload,
   type MethodologyPayload,
   type ResolveResult,
-} from "./toolHandlers.js";
-import type { ToolRefusal } from "./tools.js";
+} from "../toolHandlers/toolHandlers.js";
+import type { ToolRefusal } from "../tools/tools.js";
 
 function ref(overrides: Partial<AirportRef>): AirportRef {
   return {

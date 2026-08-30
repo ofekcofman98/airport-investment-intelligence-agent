@@ -9,10 +9,10 @@
  */
 
 import { createSnapshotDataSource } from "../data/snapshotDataSource.js";
-import { createToolHandlers } from "../agent/toolHandlers.js";
-import { createSessionStore } from "../agent/session.js";
+import { createToolHandlers } from "../agent/toolHandlers/toolHandlers.js";
+import { createSessionStore } from "../agent/session/session.js";
 import { createTrace } from "../obs/trace.js";
-import { createAgent, type Agent } from "../agent/orchestrator.js";
+import { createAgent, type Agent } from "../agent/orchestrator/orchestrator.js";
 import { createAnthropicClient } from "./anthropicClient.js";
 import type { ChannelDeps } from "./channel.js";
 

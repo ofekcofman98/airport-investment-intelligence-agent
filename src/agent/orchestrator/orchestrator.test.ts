@@ -4,10 +4,10 @@ import type {
   AirportRef,
   AirportYearMetrics,
   SnapshotManifest,
-} from "../data/types.js";
-import { createToolHandlers } from "./toolHandlers.js";
-import { createSessionStore } from "./session.js";
-import { createTrace } from "../obs/trace.js";
+} from "../../data/types.js";
+import { createToolHandlers } from "../toolHandlers/toolHandlers.js";
+import { createSessionStore } from "../session/session.js";
+import { createTrace } from "../../obs/trace.js";
 import {
   createAgent,
   auditNarration,
@@ -16,7 +16,7 @@ import {
   type LlmClient,
   type LlmRequest,
   type LlmResponse,
-} from "./orchestrator.js";
+} from "../orchestrator/orchestrator.js";
 
 // ---------------------------------------------------------------------------
 // Fakes — same style as toolHandlers.test.ts / proxyScores.test.ts: hand

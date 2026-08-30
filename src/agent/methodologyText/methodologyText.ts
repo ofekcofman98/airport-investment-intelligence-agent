@@ -7,7 +7,7 @@
  * src/scoring/weights.ts constants, never from the LLM (ADR 0002).
  */
 
-import type { MethodologyPayload } from "./toolHandlers.js";
+import type { MethodologyPayload } from "../toolHandlers/toolHandlers.js";
 
 const KPI_LABELS: Record<string, string> = {
   congestion: "Congestion Score",

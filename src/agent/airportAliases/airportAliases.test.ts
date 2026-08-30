@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { METRO_ALIASES, normalizeQuery } from "./airportAliases.js";
-import { AIRPORT_REGISTRY } from "../data/airportRegistry.js";
+import { METRO_ALIASES, normalizeQuery } from "../airportAliases/airportAliases.js";
+import { AIRPORT_REGISTRY } from "../../data/airportRegistry.js";
 
 describe("normalizeQuery", () => {
   it("lowercases and trims", () => {

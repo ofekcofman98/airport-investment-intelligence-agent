@@ -15,17 +15,17 @@ import type {
   AirportDataSource,
   AirportRef,
   AirportYearMetrics,
-} from "../data/types.js";
-import { METRO_ALIASES, normalizeQuery } from "./airportAliases.js";
+} from "../../data/types.js";
+import { METRO_ALIASES, normalizeQuery } from "../airportAliases/airportAliases.js";
 import {
   buildNormalizationContext,
   congestionScore,
   expansionOpportunityScore,
   spareCapacityScore,
   unmetDemandScore,
-} from "../scoring/proxyScores.js";
-import { rankAirports, compareAirports, type RankResult, type CompareResult } from "../scoring/rankCompare.js";
-import { effectiveRawWeights } from "../scoring/effectiveWeights.js";
+} from "../../scoring/proxyScores.js";
+import { rankAirports, compareAirports, type RankResult, type CompareResult } from "../../scoring/rankCompare.js";
+import { effectiveRawWeights } from "../../scoring/effectiveWeights.js";
 import {
   CONGESTION_WEIGHTS,
   UNMET_DEMAND_WEIGHTS,
@@ -33,14 +33,14 @@ import {
   WEIGHTS_VERSION,
   MIN_ANNUAL_PASSENGERS,
   normalizationCaveat,
-} from "../scoring/weights.js";
-import type { NormalizationContext, ProxyKpi, ScoreResult } from "../scoring/types.js";
+} from "../../scoring/weights.js";
+import type { NormalizationContext, ProxyKpi, ScoreResult } from "../../scoring/types.js";
 import {
   TOOLS,
   refusal,
   type ToolRefusal,
   type ToolName,
-} from "./tools.js";
+} from "../tools/tools.js";
 
 // ---------------------------------------------------------------------------
 // Disclosed notes (SPEC §2, §3, §4) — attached to the payloads that carry

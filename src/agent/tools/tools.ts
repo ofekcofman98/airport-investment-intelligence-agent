@@ -10,8 +10,8 @@
  */
 
 import { z } from "zod";
-import type { Region } from "../data/types.js";
-import type { ProxyKpi } from "../scoring/types.js";
+import type { Region } from "../../data/types.js";
+import type { ProxyKpi } from "../../scoring/types.js";
 
 /** Mirrors scoring/types.ts's ProxyKpi — kept as a literal tuple here so
  * this file has no import-time dependency on scoring internals beyond the

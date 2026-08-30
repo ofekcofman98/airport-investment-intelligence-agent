@@ -16,12 +16,12 @@
  * src/interface/cli.ts, not built here.
  */
 
-import { anthropicTools, type ToolRefusal } from "./tools.js";
-import { dispatch, type ToolHandlers, type MethodologyPayload } from "./toolHandlers.js";
-import { buildSystemPrompt } from "./systemPrompt.js";
-import { formatMethodology } from "./methodologyText.js";
-import type { SessionStore, Turn } from "./session.js";
-import type { Trace, TraceEvent } from "../obs/trace.js";
+import { anthropicTools, type ToolRefusal } from "../tools/tools.js";
+import { dispatch, type ToolHandlers, type MethodologyPayload } from "../toolHandlers/toolHandlers.js";
+import { buildSystemPrompt } from "../systemPrompt/systemPrompt.js";
+import { formatMethodology } from "../methodologyText/methodologyText.js";
+import type { SessionStore, Turn } from "../session/session.js";
+import type { Trace, TraceEvent } from "../../obs/trace.js";
 
 // ---------------------------------------------------------------------------
 // LLM wire types — a minimal subset of Anthropic's Messages API shape,

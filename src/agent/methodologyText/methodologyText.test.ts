@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { formatMethodology } from "./methodologyText.js";
-import type { MethodologyPayload } from "./toolHandlers.js";
-import { normalizationCaveat } from "../scoring/weights.js";
+import { formatMethodology } from "../methodologyText/methodologyText.js";
+import type { MethodologyPayload } from "../toolHandlers/toolHandlers.js";
+import { normalizationCaveat } from "../../scoring/weights.js";
 
 const PAYLOAD: MethodologyPayload = {
   weightsVersion: "v1",

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createSessionStore, MAX_HISTORY_TURNS } from "./session.js";
+import { createSessionStore, MAX_HISTORY_TURNS } from "../session/session.js";
 
 describe("createSessionStore", () => {
   it("returns an empty history for an unknown session", () => {

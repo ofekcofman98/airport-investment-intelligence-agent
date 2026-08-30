@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSystemPrompt } from "./systemPrompt.js";
+import { buildSystemPrompt } from "../systemPrompt/systemPrompt.js";
 
 describe("buildSystemPrompt", () => {
   const prompt = buildSystemPrompt(48, 2025);
