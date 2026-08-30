@@ -24,7 +24,7 @@ export function describeMethodology(ctx: HandlerContext) {
     return {
       weightsVersion: WEIGHTS_VERSION,
       minAnnualPassengers: MIN_ANNUAL_PASSENGERS,
-      caveat: normalizationCaveat(ctx.refs.length),
+      caveat: normalizationCaveat(ctx.manifest.airportCount),
       entries: kpisToDescribe.map((k) => ({ kpi: k, weights: ctx.weightsFor(k) })),
       effectiveWeights: effectiveRawWeights(),
     };

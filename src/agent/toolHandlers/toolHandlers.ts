@@ -16,7 +16,12 @@
  * resolveAirportsMatch.ts.
  */
 
-import type { AirportDataSource, AirportYearMetrics } from "../../data/types.js";
+import type {
+  AirportCode,
+  AirportDataSource,
+  AirportRef,
+  AirportYearMetrics,
+} from "../../data/types.js";
 import {
   buildNormalizationContext,
   congestionScore,
@@ -87,29 +92,55 @@ function weightsForKpi(kpi: ProxyKpi): Record<string, number> {
  */
 export function createToolHandlers(dataSource: AirportDataSource): ToolHandlers {
   const manifest = dataSource.getManifest();
-  const refs = dataSource.listAirports();
 
-  // Assembled once at construction (decision 2) so every handler scores
-  // against an identical universe/normalization context across a
-  // conversation. Airports with no metrics file for the analysis year
-  // (legitimately absent from a BTS extract) are simply excluded from the
-  // scoring universe — they still resolve via resolve_airports/getAirportRef.
-  const universe: AirportYearMetrics[] = [];
-  for (const ref of refs) {
-    const metrics = dataSource.getYearMetrics(ref.code, manifest.analysisYear);
-    if (metrics) universe.push(metrics);
+  // Memoized on first access (decision 2 still holds: once built, the same
+  // universe/normalization context is reused for the rest of the
+  // conversation) — but NOT built at construction time, so a handler that
+  // never touches the data source (describe_methodology) truly never
+  // triggers a dataSource fetch. Airports with no metrics file for the
+  // analysis year (legitimately absent from a BTS extract) are simply
+  // excluded from the scoring universe — they still resolve via
+  // resolve_airports/getAirportRef.
+  let built:
+    | {
+        refs: AirportRef[];
+        universe: AirportYearMetrics[];
+        universeByCode: Map<AirportCode, AirportYearMetrics>;
+        normalizationCtx: NormalizationContext;
+      }
+    | undefined;
+
+  function getOrBuild() {
+    if (!built) {
+      const refs = dataSource.listAirports();
+      const universe: AirportYearMetrics[] = [];
+      for (const ref of refs) {
+        const metrics = dataSource.getYearMetrics(ref.code, manifest.analysisYear);
+        if (metrics) universe.push(metrics);
+      }
+      const universeByCode = new Map(universe.map((m) => [m.code, m]));
+      const normalizationCtx = buildNormalizationContext(universe);
+      built = { refs, universe, universeByCode, normalizationCtx };
+    }
+    return built;
   }
-  const universeByCode = new Map(universe.map((m) => [m.code, m]));
-  const normalizationCtx: NormalizationContext = buildNormalizationContext(universe);
 
   const ctx: HandlerContext = {
     dataSource,
     manifest,
-    refs,
-    universe,
-    universeByCode,
-    ctx: normalizationCtx,
-    scoreFor: (kpi, m) => scoreForKpi(kpi, m, normalizationCtx),
+    get refs() {
+      return getOrBuild().refs;
+    },
+    get universe() {
+      return getOrBuild().universe;
+    },
+    get universeByCode() {
+      return getOrBuild().universeByCode;
+    },
+    get ctx() {
+      return getOrBuild().normalizationCtx;
+    },
+    scoreFor: (kpi, m) => scoreForKpi(kpi, m, getOrBuild().normalizationCtx),
     weightsFor: weightsForKpi,
   };
 

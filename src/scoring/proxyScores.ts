@@ -157,7 +157,10 @@ function computeWeightedScore<K extends RawSignalName>(
     return { signal, raw, normalized, weight, contribution: normalized * weight };
   });
 
-  const score = breakdown.reduce((sum, entry) => sum + entry.contribution, 0);
+  // Clamp guards against float summation drift (weighted [0,100]
+  // sub-contributions can overshoot 100 by a fraction of a ULP) — not a
+  // logic bug, so don't "fix" it back out.
+  const score = Math.min(100, Math.max(0, breakdown.reduce((sum, entry) => sum + entry.contribution, 0)));
 
   return { breakdown, dropped, score, retainedWeightShare };
 }
@@ -283,7 +286,10 @@ export function expansionOpportunityScore(
     rescale(logPassengersEntry, "logPassengers"),
   ];
 
-  const score = breakdown.reduce((sum, entry) => sum + entry.contribution, 0);
+  // Clamp guards against float summation drift (weighted [0,100]
+  // sub-contributions can overshoot 100 by a fraction of a ULP) — not a
+  // logic bug, so don't "fix" it back out.
+  const score = Math.min(100, Math.max(0, breakdown.reduce((sum, entry) => sum + entry.contribution, 0)));
 
   // Weighted average of the retained inputs' own confidence: the two
   // composed sub-scores contribute their real confidence, the two direct

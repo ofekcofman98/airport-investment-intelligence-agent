@@ -19,13 +19,16 @@ import type { NormalizationContext, ProxyKpi, ScoreResult } from "../../scoring/
 export interface HandlerContext {
   dataSource: AirportDataSource;
   manifest: SnapshotManifest;
-  refs: AirportRef[];
+  /** Lazily built on first access (memoized) so handlers that never need the
+   * airport universe — e.g. describe_methodology — never trigger a
+   * dataSource fetch. See toolHandlers.ts createToolHandlers. */
+  readonly refs: AirportRef[];
   /** Airports with metrics for the analysis year — legitimately-absent BTS
    * extracts are excluded from the scoring universe but still resolve via
-   * resolve_airports/getAirportRef. */
-  universe: AirportYearMetrics[];
-  universeByCode: Map<AirportCode, AirportYearMetrics>;
-  ctx: NormalizationContext;
+   * resolve_airports/getAirportRef. Lazily built, same as `refs`. */
+  readonly universe: AirportYearMetrics[];
+  readonly universeByCode: Map<AirportCode, AirportYearMetrics>;
+  readonly ctx: NormalizationContext;
   scoreFor(kpi: ProxyKpi, m: AirportYearMetrics): ScoreResult;
   weightsFor(kpi: ProxyKpi): Record<string, number>;
 }
