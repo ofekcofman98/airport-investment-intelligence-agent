@@ -112,6 +112,43 @@ growth), turning these priors into fitted coefficients with confidence
 intervals — letting us report *why* a weight is what it is empirically,
 rather than defending it as judgment.
 
+## Reasoning transparency (src/obs/)
+
+`src/obs/trace.ts` records every tool call and result made during a turn
+(`{ tool, args, result, timestamp }`), surfaced by the CLI on request (e.g.
+`--trace` or a `/why` follow-up). This was an addition made independently
+during implementation, not part of the originally approved folder
+structure — flagged and recorded as ADR 0008. It directly serves the
+assignment's "explain its reasoning clearly" requirement and doubles as
+evidence, not just an assertion, of the LLM/deterministic split (ADR 0002):
+a user can see exactly which deterministic tool call produced any number in
+an answer.
+
+## Cost awareness
+
+Two cost/latency-relevant decisions, kept distinct from each other:
+
+- **Prompt caching.** The system prompt and tool schemas (`systemPrompt.ts`,
+  `tools.ts`) are stable across every turn within a session, so they are
+  sent as cached prompt blocks (Anthropic prompt caching). This reduces
+  latency and per-token cost on every turn after the first in a session.
+  This is a **separate concern from rate limiting** — prompt caching does
+  nothing to protect against hitting a requests/tokens-per-minute limit; a
+  production deployment would still need its own semaphore/backoff/queuing
+  in front of the Anthropic SDK calls. The two should not be conflated: this
+  build addresses caching (cheap, in scope for a demo) and explicitly does
+  not implement rate-limiting infrastructure (out of scope for a one-day,
+  single-user CLI demo).
+- **LLM bypass for `describe_methodology`.** The content this tool returns
+  (a proxy KPI's formula, weights, and confounders) is static text already
+  fully documented in `SPEC.md`/`weights.ts` — there is nothing for the LLM
+  to compute or narrate beyond what's already written. When no additional
+  narration is requested, this tool returns its formatted text directly to
+  the user, skipping a full LLM synthesis round-trip. This saves a model
+  call on a purely-static answer without weakening the LLM/deterministic
+  split (the text still originates entirely from the deterministic
+  constants file, never from the LLM).
+
 ## Where/how AI is used
 
 _To be completed once the agent layer is implemented — will cover: tool
