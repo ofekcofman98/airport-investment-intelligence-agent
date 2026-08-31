@@ -98,82 +98,91 @@ export function createCli(deps: ChannelDeps, opts: CliOptions = {}): Channel {
   });
   const write = (s: string) => output.write(s + "\n");
 
+  /** Handles one line of input. Returns true if the session should end. */
+  async function handleLine(line: string): Promise<boolean> {
+    const command = parseCommand(line);
+
+    if (command.type === "exit") return true;
+
+    if (command.type === "help") {
+      write(HELP_TEXT);
+      return false;
+    }
+
+    if (command.type === "reset") {
+      deps.sessions.clear(sessionId);
+      write("Session history cleared.");
+      return false;
+    }
+
+    if (command.type === "why") {
+      write(formatWhy(deps.trace.events()));
+      return false;
+    }
+
+    if (command.type === "trace") {
+      write(formatTrace(deps.trace.events()));
+      return false;
+    }
+
+    if (command.text.trim().length === 0) return false;
+
+    // Cleared before each turn so /why and /trace mean "the last answer"
+    // rather than accumulating across the whole process (independent
+    // decision D2 — the trace recorder itself is process-lifetime,
+    // per-turn clearing is this channel's own choice, ADR 0009).
+    deps.trace.clear();
+
+    const thinking = setInterval(() => output.write("."), 400);
+    output.write("Thinking.");
+
+    try {
+      const reply = await deps.agent.handleMessage(command.text, sessionId);
+      clearInterval(thinking);
+      write("\n" + reply.text);
+      if (reply.audited !== "passed") {
+        write(
+          `[note: this answer was ${reply.audited} by the output-consistency ` +
+            `check before being shown]`
+        );
+      }
+      if (opts.traceEveryTurn) {
+        write(formatTrace(deps.trace.events()));
+      }
+    } catch (err) {
+      clearInterval(thinking);
+      if (err instanceof LlmClientError) {
+        const hint = err.transient
+          ? "[retry hint: this is usually transient — wait a moment and try again]"
+          : "[config-check hint: verify ANTHROPIC_API_KEY and account status]";
+        write(`\nError: ${err.message}\n${hint}`);
+      } else {
+        const message = err instanceof Error ? err.message : String(err);
+        write(`\nError: ${message}`);
+      }
+    }
+
+    return false;
+  }
+
   async function start(): Promise<void> {
     write(
       `Airport Investment Intelligence Agent — ${deps.airportCount} airports, ` +
         `analysis year ${deps.analysisYear}. Type /help for commands, /exit to quit.`
     );
 
-    for (;;) {
-      let line: string;
-      try {
-        line = await rl.question("\n> ");
-      } catch {
-        // Input stream closed (e.g. piped stdin ended, or Ctrl+D) — end the
-        // session cleanly rather than throwing out of the REPL loop.
-        break;
-      }
-      const command = parseCommand(line);
-
-      if (command.type === "exit") break;
-
-      if (command.type === "help") {
-        write(HELP_TEXT);
-        continue;
-      }
-
-      if (command.type === "reset") {
-        deps.sessions.clear(sessionId);
-        write("Session history cleared.");
-        continue;
-      }
-
-      if (command.type === "why") {
-        write(formatWhy(deps.trace.events()));
-        continue;
-      }
-
-      if (command.type === "trace") {
-        write(formatTrace(deps.trace.events()));
-        continue;
-      }
-
-      if (command.text.trim().length === 0) continue;
-
-      // Cleared before each turn so /why and /trace mean "the last answer"
-      // rather than accumulating across the whole process (independent
-      // decision D2 — the trace recorder itself is process-lifetime,
-      // per-turn clearing is this channel's own choice, ADR 0009).
-      deps.trace.clear();
-
-      const thinking = setInterval(() => output.write("."), 400);
-      output.write("Thinking.");
-
-      try {
-        const reply = await deps.agent.handleMessage(command.text, sessionId);
-        clearInterval(thinking);
-        write("\n" + reply.text);
-        if (reply.audited !== "passed") {
-          write(
-            `[note: this answer was ${reply.audited} by the output-consistency ` +
-              `check before being shown]`
-          );
-        }
-        if (opts.traceEveryTurn) {
-          write(formatTrace(deps.trace.events()));
-        }
-      } catch (err) {
-        clearInterval(thinking);
-        if (err instanceof LlmClientError) {
-          const hint = err.transient
-            ? "[retry hint: this is usually transient — wait a moment and try again]"
-            : "[config-check hint: verify ANTHROPIC_API_KEY and account status]";
-          write(`\nError: ${err.message}\n${hint}`);
-        } else {
-          const message = err instanceof Error ? err.message : String(err);
-          write(`\nError: ${message}`);
-        }
-      }
+    // A `for await` loop over `rl` (rather than repeated `rl.question()`
+    // calls) keeps a permanent listener on the underlying stream, so a line
+    // arriving while a previous turn is still being processed (e.g. piped
+    // or scripted input, or the LLM call taking a moment) is queued by
+    // Node's readline internals rather than silently dropped by a listener
+    // that isn't attached yet. `rl.question()` in a loop has exactly that
+    // gap between turns and drops such input.
+    output.write("\n> ");
+    for await (const line of rl) {
+      const shouldExit = await handleLine(line);
+      if (shouldExit) break;
+      output.write("\n> ");
     }
 
     rl.close();
