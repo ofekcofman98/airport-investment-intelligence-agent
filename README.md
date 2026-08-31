@@ -8,7 +8,7 @@ aviation data — built for the FDE take-home assignment at Wonderful.
 
 ```bash
 npm install
-export ANTHROPIC_API_KEY=sk-...
+cp .env.example .env   # then fill in ANTHROPIC_API_KEY
 npm run cli
 ```
 
