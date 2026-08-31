@@ -13,6 +13,7 @@ import { createInterface } from "node:readline/promises";
 import { randomUUID } from "node:crypto";
 import type { Channel, ChannelDeps } from "./channel.js";
 import type { TraceEvent } from "../obs/trace.js";
+import { LlmClientError } from "../agent/llmClient/llmClient.js";
 
 // ---------------------------------------------------------------------------
 // Pure command parsing + formatting (unit-tested in cli.test.ts)
@@ -163,8 +164,15 @@ export function createCli(deps: ChannelDeps, opts: CliOptions = {}): Channel {
         }
       } catch (err) {
         clearInterval(thinking);
-        const message = err instanceof Error ? err.message : String(err);
-        write(`\nError: ${message}`);
+        if (err instanceof LlmClientError) {
+          const hint = err.transient
+            ? "[retry hint: this is usually transient — wait a moment and try again]"
+            : "[config-check hint: verify ANTHROPIC_API_KEY and account status]";
+          write(`\nError: ${err.message}\n${hint}`);
+        } else {
+          const message = err instanceof Error ? err.message : String(err);
+          write(`\nError: ${message}`);
+        }
       }
     }
 

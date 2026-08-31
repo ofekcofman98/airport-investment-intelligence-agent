@@ -16,14 +16,20 @@
  */
 
 import Anthropic from "@anthropic-ai/sdk";
-import type {
-  LlmClient,
-  LlmRequest,
-  LlmResponse,
-  LlmAssistantBlock,
-  LlmMessage,
-  LlmMessageContent,
+import {
+  LlmClientError,
+  type LlmClient,
+  type LlmRequest,
+  type LlmResponse,
+  type LlmAssistantBlock,
+  type LlmMessage,
+  type LlmMessageContent,
 } from "../agent/llmClient/llmClient.js";
+
+// Statuses the SDK's own retry logic already exhausts before this bubbles
+// up to us — surfaced as "transient" so the caller can offer a retry hint
+// rather than a config-check one. See llmClient.ts's LlmClientError.
+const TRANSIENT_STATUSES = [429, 500, 502, 503, 504, 529];
 
 // D3 (plan "Independent decisions"): model id and token cap are
 // interface-layer constants — no ADR governs the specific model choice.
@@ -101,19 +107,37 @@ export function createAnthropicClient(apiKey: string | undefined = process.env.A
           : t
       );
 
-      const response = await client.messages.create({
-        model: MODEL_ID,
-        max_tokens: MAX_TOKENS,
-        system: [
-          {
-            type: "text",
-            text: request.system,
-            cache_control: { type: "ephemeral" },
-          },
-        ],
-        messages: toAnthropicMessages(request.messages),
-        ...(tools ? { tools: tools as unknown as Anthropic.Tool[] } : {}),
-      });
+      let response;
+      try {
+        response = await client.messages.create({
+          model: MODEL_ID,
+          max_tokens: MAX_TOKENS,
+          system: [
+            {
+              type: "text",
+              text: request.system,
+              cache_control: { type: "ephemeral" },
+            },
+          ],
+          messages: toAnthropicMessages(request.messages),
+          ...(tools ? { tools: tools as unknown as Anthropic.Tool[] } : {}),
+        });
+      } catch (err) {
+        if (err instanceof Anthropic.APIError) {
+          const status = err.status;
+          const transient = status !== undefined && TRANSIENT_STATUSES.includes(status);
+          throw new LlmClientError(
+            transient
+              ? "Claude API is temporarily unavailable (rate limit or overload). Please try again shortly."
+              : `Claude API request failed (status ${status}): ${err.message}`,
+            transient,
+            status
+          );
+        }
+        // Non-APIError (e.g. network) — rethrow unchanged, same convention
+        // as handlerHelpers.ts's guarded(): only known shapes get wrapped.
+        throw err;
+      }
 
       return { content: fromAnthropicContent(response.content) };
     },

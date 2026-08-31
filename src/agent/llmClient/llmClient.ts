@@ -53,6 +53,24 @@ export interface LlmClient {
   createMessage(request: LlmRequest): Promise<LlmResponse>;
 }
 
+/** Structured error an LlmClient implementation throws when the underlying
+ * call fails, so callers (e.g. src/interface/cli.ts) can distinguish a
+ * transient failure (worth retrying) from a fatal one (config/auth) without
+ * depending on the SDK's own error type. Kept in this file to preserve its
+ * zero-SDK-dependency rule — the real classification into `transient`
+ * happens in src/interface/anthropicClient.ts, the only file that imports
+ * @anthropic-ai/sdk. */
+export class LlmClientError extends Error {
+  constructor(
+    message: string,
+    public transient: boolean,
+    public status?: number
+  ) {
+    super(message);
+    this.name = "LlmClientError";
+  }
+}
+
 export function hasToolUse(response: LlmResponse): boolean {
   return response.content.some((b) => b.type === "tool_use");
 }

@@ -207,7 +207,36 @@ Two cost/latency-relevant decisions, kept distinct from each other:
 
 ## Where/how AI is used
 
-_To be completed once the agent layer is implemented — will cover: tool
-selection loop, natural-language synthesis of deterministic results,
-session/follow-up handling, and the explicit LLM/deterministic boundary per
-ADR._
+- The LLM (claude-sonnet-5, `src/interface/anthropicClient.ts`) is the sole
+  interpretive layer, called from a single point: `orchestrator.ts`'s tool-
+  calling loop (max 5 rounds, ADR-governed). It has three responsibilities
+  only — interpret the user's question, select from six read-only tools
+  (`resolve_airports`, `get_airport_metrics`, `rank_airports`,
+  `compare_airports`, `explain_score`, `describe_methodology`) with the
+  right arguments, and narrate the result in natural language. It never
+  computes a score, ranking, or comparison — every number originates in
+  `src/scoring/`'s pure, unit-tested functions.
+
+- **Defense in depth beyond the structural split:** `narrationAudit.ts`
+  checks every narrated number against the tool results that produced it
+  after the LLM responds. A mismatch triggers one regeneration naming the
+  exact discrepancy; a second mismatch falls back to a fully templated
+  answer built directly from tool output, bypassing the LLM entirely. This
+  catches misreporting (misquoting a correct number) as a distinct failure
+  mode from miscalculation (already prevented structurally by the
+  LLM/scoring split).
+
+- `src/obs/trace.ts` records every tool call and result per turn, exposed
+  via `/trace` and `/why` — every number in a response is traceable to the
+  specific deterministic call that produced it, not just asserted to be.
+
+- **Human-in-the-loop, even though every tool here is read-only:** no tool
+  in this system takes an action requiring confirmation, so there is no
+  literal approval step to show. The same LLM/deterministic separation that
+  enables the guarantees above is what would make a safe write-confirmation
+  step possible in a context that does involve writes: if deterministic
+  code always computes and decides, the confirmation text shown to a user
+  before a write can be generated from the same deterministic call that
+  would perform it — not from the model's account of its own intent. This
+  system doesn't need that mechanism today, but the separation that would
+  enable it is already in place.
